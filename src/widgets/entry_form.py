@@ -8,7 +8,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import pyqtSignal
 
 from styles import VALID_STYLE, INVALID_STYLE, ERROR_LABEL_STYLE
-from validators import validate_url, validate_username, validate_password
+from validators import validate_url, validate_username
 
 class EntryForm(QWidget):
     entry_added = pyqtSignal(str, str, str)
@@ -75,9 +75,9 @@ class EntryForm(QWidget):
             self.username_input.setStyleSheet(VALID_STYLE)
             self.username_error.setText("")
 
-        if not validate_password(password):
+        if not password.strip():
             self.password_input.setStyleSheet(INVALID_STYLE)
-            self.password_error.setText("Min 8 chars, upper, lower, digit, special")
+            self.password_error.setText("Password cannot be empty")
             valid = False
         else:
             self.password_input.setStyleSheet(VALID_STYLE)
