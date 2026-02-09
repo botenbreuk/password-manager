@@ -1,77 +1,39 @@
 import sys
 from pathlib import Path
 
-from PyQt6.QtWidgets import QApplication, QMessageBox
+from PyQt6.QtGui import QGuiApplication, QFontDatabase
+from PyQt6.QtQml import QQmlApplicationEngine
 
-from vault import VaultManager
-from dialogs import SetupWizard, UnlockDialog
-from windows import MainWindow
-
-
-DEFAULT_VAULT_PATH = Path.home() / ".password_manager" / "default.vault"
-
-
-def show_error(message: str):
-    msg = QMessageBox()
-    msg.setIcon(QMessageBox.Icon.Critical)
-    msg.setWindowTitle("Error")
-    msg.setText(message)
-    msg.exec()
+from models import VaultController
 
 
 def main():
-    app = QApplication(sys.argv)
+    app = QGuiApplication(sys.argv)
+    app.setApplicationName("Password Manager")
 
-    vault = VaultManager()
+    # Load Material Icons font
+    font_path = Path(__file__).parent / "resources" / "MaterialIcons-Regular.ttf"
+    QFontDatabase.addApplicationFont(str(font_path))
 
-    while True:
-        # Check if default vault exists
-        if VaultManager.exists(DEFAULT_VAULT_PATH):
-            # Show unlock dialog
-            dialog = UnlockDialog(DEFAULT_VAULT_PATH)
-            if dialog.exec() != UnlockDialog.DialogCode.Accepted:
-                sys.exit(0)
+    # Create vault controller with app as parent to control lifetime
+    vault_controller = VaultController(app)
 
-            if dialog.create_new:
-                # User wants to create a new vault
-                wizard = SetupWizard()
-                if wizard.exec() != SetupWizard.DialogCode.Accepted:
-                    continue
+    engine = QQmlApplicationEngine()
+    engine.rootContext().setContextProperty("vaultController", vault_controller)
 
-                vault.create(wizard.vault_path, wizard.vault_name, wizard.master_password)
-                break
-            else:
-                # Try to unlock
-                if vault.open(dialog.vault_path, dialog.master_password):
-                    break
-                else:
-                    show_error("Failed to unlock vault. Incorrect password?")
-        else:
-            # Show unlock dialog with option to browse or create new
-            dialog = UnlockDialog()
-            if dialog.exec() != UnlockDialog.DialogCode.Accepted:
-                sys.exit(0)
+    # Load main QML file
+    qml_file = Path(__file__).parent / "qml" / "Main.qml"
+    engine.load(str(qml_file))
 
-            if dialog.create_new:
-                # Create new vault
-                wizard = SetupWizard()
-                if wizard.exec() != SetupWizard.DialogCode.Accepted:
-                    continue
+    if not engine.rootObjects():
+        sys.exit(-1)
 
-                # Ensure parent directory exists
-                wizard.vault_path.parent.mkdir(parents=True, exist_ok=True)
-                vault.create(wizard.vault_path, wizard.vault_name, wizard.master_password)
-                break
-            else:
-                # Try to unlock selected vault
-                if vault.open(dialog.vault_path, dialog.master_password):
-                    break
-                else:
-                    show_error("Failed to unlock vault. Incorrect password?")
+    exit_code = app.exec()
 
-    window = MainWindow(vault)
-    window.show()
-    sys.exit(app.exec())
+    # Cleanup before exit
+    del engine
+
+    sys.exit(exit_code)
 
 
 if __name__ == "__main__":
