@@ -1,16 +1,15 @@
 import json
-import sqlite3
-import tempfile
 import zipfile
 import os
+import tempfile
 from pathlib import Path
 from typing import Optional
 
-from vault.crypto import encrypt_data, decrypt_data
+import sqlcipher3
 
 
 VAULT_INFO_FILE = "vault.json"
-VAULT_DB_FILE = "vault.db.enc"
+VAULT_DB_FILE = "vault.db"
 
 
 class VaultManager:
@@ -19,7 +18,7 @@ class VaultManager:
         self.master_password: Optional[str] = None
         self.vault_name: Optional[str] = None
         self._db_path: Optional[Path] = None
-        self._conn: Optional[sqlite3.Connection] = None
+        self._conn: Optional[sqlcipher3.Connection] = None
 
     @staticmethod
     def exists(path: Path) -> bool:
@@ -30,9 +29,10 @@ class VaultManager:
         self.vault_name = name
         self.master_password = master_password
 
-        # Create temporary database
+        # Create temporary encrypted database
         self._db_path = Path(tempfile.mktemp(suffix=".db"))
-        self._conn = sqlite3.connect(self._db_path)
+        self._conn = sqlcipher3.connect(str(self._db_path))
+        self._conn.execute(f"PRAGMA key = '{master_password}'")
         self._init_database()
 
         # Save vault
@@ -48,20 +48,24 @@ class VaultManager:
                 vault_info = json.loads(zf.read(VAULT_INFO_FILE))
                 self.vault_name = vault_info.get("name", "Unknown")
 
-                # Decrypt and load database
-                encrypted_db = zf.read(VAULT_DB_FILE)
-                db_data = decrypt_data(encrypted_db, master_password)
-
-                # Write to temporary file
+                # Extract encrypted database to temp file
                 self._db_path = Path(tempfile.mktemp(suffix=".db"))
-                self._db_path.write_bytes(db_data)
+                self._db_path.write_bytes(zf.read(VAULT_DB_FILE))
 
-                self._conn = sqlite3.connect(self._db_path)
-                return True
+            # Open with SQLCipher
+            self._conn = sqlcipher3.connect(str(self._db_path))
+            self._conn.execute(f"PRAGMA key = '{master_password}'")
+
+            # Verify password by attempting a query
+            self._conn.execute("SELECT count(*) FROM sqlite_master").fetchone()
+            return True
         except Exception:
             self.vault_path = None
             self.master_password = None
             self.vault_name = None
+            if self._db_path and self._db_path.exists():
+                os.remove(self._db_path)
+                self._db_path = None
             return False
 
     def close(self):
@@ -79,17 +83,13 @@ class VaultManager:
 
         self._conn.commit()
 
-        # Read database bytes
-        db_data = self._db_path.read_bytes()
-        encrypted_db = encrypt_data(db_data, self.master_password)
-
         # Create vault info
         vault_info = {"name": self.vault_name, "version": "1.0"}
 
-        # Write zip file
+        # Write zip file with encrypted database
         with zipfile.ZipFile(self.vault_path, 'w', zipfile.ZIP_DEFLATED) as zf:
             zf.writestr(VAULT_INFO_FILE, json.dumps(vault_info, indent=2))
-            zf.writestr(VAULT_DB_FILE, encrypted_db)
+            zf.write(self._db_path, VAULT_DB_FILE)
 
     def _init_database(self):
         cursor = self._conn.cursor()

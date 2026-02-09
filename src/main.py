@@ -26,7 +26,7 @@ def main():
 
     while True:
         # Check if default vault exists
-        if DEFAULT_VAULT_PATH.exists():
+        if VaultManager.exists(DEFAULT_VAULT_PATH):
             # Show unlock dialog
             dialog = UnlockDialog(DEFAULT_VAULT_PATH)
             if dialog.exec() != UnlockDialog.DialogCode.Accepted:

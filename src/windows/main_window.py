@@ -36,7 +36,7 @@ class MainWindow(QMainWindow):
 
     def _on_entry_added(self, site: str, username: str, password: str):
         entry_id = self.vault.add_password(site, username, password)
-        self.table.add_entry(entry_id, site, username)
+        self.table.add_entry(entry_id, site, username, password)
 
     def _on_entry_deleted(self, entry_id: int):
         self.vault.delete_password(entry_id)

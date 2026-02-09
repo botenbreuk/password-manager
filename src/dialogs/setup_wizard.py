@@ -35,7 +35,7 @@ class SetupWizard(QDialog):
         layout.addWidget(header)
 
         # Description
-        desc = QLabel("Create a secure vault to store your passwords.\nThis file will be encrypted with your master password.")
+        desc = QLabel("Create a secure vault to store your passwords.\nThe database will be encrypted with your master password.")
         desc.setAlignment(Qt.AlignmentFlag.AlignCenter)
         desc.setStyleSheet("margin-bottom: 20px;")
         layout.addWidget(desc)
