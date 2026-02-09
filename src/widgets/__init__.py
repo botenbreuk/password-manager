@@ -1,2 +1,2 @@
-from .password_table import PasswordTable
-from .entry_form import EntryForm
+from widgets.password_table import PasswordTable
+from widgets.entry_form import EntryForm

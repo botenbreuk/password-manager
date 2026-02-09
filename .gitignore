@@ -209,3 +209,5 @@ __marimo__/
 .idea
 .vscode
 *.iml
+
+*.vault
