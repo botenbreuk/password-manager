@@ -17,10 +17,7 @@ Item {
 
     Rectangle {
         anchors.fill: parent
-        gradient: Gradient {
-            GradientStop { position: 0.0; color: "#1a1a1a" }
-            GradientStop { position: 1.0; color: "#252525" }
-        }
+        color: "#1e1e1e"
 
         Column {
             anchors.centerIn: parent

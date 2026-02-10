@@ -6,10 +6,10 @@ import QtQuick.Controls.Material
 ApplicationWindow {
     id: root
     visible: true
-    width: 900
-    height: 600
-    minimumWidth: 700
-    minimumHeight: 500
+    width: 1100
+    height: 750
+    minimumWidth: 800
+    minimumHeight: 600
     title: "Password Manager" + (vaultController && vaultController.vaultName ? " - " + vaultController.vaultName : "")
 
     Material.theme: Material.Dark

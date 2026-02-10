@@ -9,11 +9,12 @@ Dialog {
     id: setupDialog
     title: ""
     modal: true
-    width: 480
-    height: 620
+    width: 550
+    height: 700
     anchors.centerIn: parent
     padding: 0
     topPadding: 0
+    dim: true
 
     Material.theme: Material.Dark
     Material.accent: "#1976D2"
@@ -25,9 +26,15 @@ Dialog {
     property string confirmError: ""
     property string locationError: ""
 
+    Overlay.modal: Rectangle {
+        color: "#D0000000"
+    }
+
     background: Rectangle {
-        color: "#1e1e1e"
+        color: "#E8141414"
         radius: 16
+        border.color: "#404040"
+        border.width: 1
 
         layer.enabled: true
         layer.effect: MultiEffect {
