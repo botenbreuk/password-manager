@@ -6,23 +6,55 @@ import QtQuick.Controls.Material
 ApplicationWindow {
     id: root
     visible: true
-    width: 800
-    height: 500
-    minimumWidth: 600
-    minimumHeight: 400
+    width: 900
+    height: 600
+    minimumWidth: 700
+    minimumHeight: 500
     title: "Password Manager" + (vaultController && vaultController.vaultName ? " - " + vaultController.vaultName : "")
 
     Material.theme: Material.Dark
-    Material.accent: Material.Blue
+    Material.accent: "#1976D2"
 
     property bool vaultUnlocked: false
 
-    color: "#1e1e1e"
+    color: "#1a1a1a"
 
-    Loader {
-        id: mainLoader
+    // Smooth transition container
+    Item {
+        id: viewContainer
         anchors.fill: parent
-        sourceComponent: vaultUnlocked ? mainViewComponent : unlockComponent
+
+        // Unlock view
+        Loader {
+            id: unlockLoader
+            anchors.fill: parent
+            sourceComponent: unlockComponent
+            active: !vaultUnlocked
+            opacity: vaultUnlocked ? 0 : 1
+
+            Behavior on opacity {
+                NumberAnimation {
+                    duration: 300
+                    easing.type: Easing.OutQuad
+                }
+            }
+        }
+
+        // Main view
+        Loader {
+            id: mainLoader
+            anchors.fill: parent
+            sourceComponent: mainViewComponent
+            active: vaultUnlocked
+            opacity: vaultUnlocked ? 1 : 0
+
+            Behavior on opacity {
+                NumberAnimation {
+                    duration: 300
+                    easing.type: Easing.OutQuad
+                }
+            }
+        }
     }
 
     Component {

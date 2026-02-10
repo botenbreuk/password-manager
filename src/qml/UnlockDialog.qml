@@ -3,6 +3,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import QtQuick.Dialogs
 import QtQuick.Controls.Material
+import QtQuick.Effects
 
 Item {
     id: unlockView
@@ -16,114 +17,182 @@ Item {
 
     Rectangle {
         anchors.fill: parent
-        color: "#1e1e1e"
+        gradient: Gradient {
+            GradientStop { position: 0.0; color: "#1a1a1a" }
+            GradientStop { position: 1.0; color: "#252525" }
+        }
 
-        ColumnLayout {
+        Column {
             anchors.centerIn: parent
-            width: 400
-            spacing: 20
+            width: 380
+            spacing: 24
 
-            // Header
-            Text {
-                text: "🔐"
-                font.pixelSize: 48
-                Layout.alignment: Qt.AlignHCenter
-            }
-
-            Text {
-                text: "Unlock Your Vault"
-                font.bold: true
-                font.pixelSize: 24
-                color: "#e0e0e0"
-                Layout.alignment: Qt.AlignHCenter
-            }
-
+            // Lock icon
             Rectangle {
-                Layout.fillWidth: true
-                height: contentColumn.height + 40
-                color: "#2d2d2d"
-                border.color: "#3d3d3d"
-                border.width: 1
-                radius: 8
+                width: 72
+                height: 72
+                radius: 36
+                color: "#2a2a2a"
+                anchors.horizontalCenter: parent.horizontalCenter
 
-                ColumnLayout {
-                    id: contentColumn
+                layer.enabled: true
+                layer.effect: MultiEffect {
+                    shadowEnabled: true
+                    shadowColor: "#1976D2"
+                    shadowBlur: 0.8
+                    shadowOpacity: 0.3
+                }
+
+                Text {
+                    anchors.centerIn: parent
+                    text: "\ue897"
+                    font.family: "Material Icons"
+                    font.pixelSize: 36
+                    color: "#1976D2"
+                }
+            }
+
+            // Title
+            Column {
+                width: parent.width
+                spacing: 8
+
+                Text {
+                    text: "Welcome Back"
+                    font.pixelSize: 26
+                    font.weight: Font.DemiBold
+                    color: "#ffffff"
+                    anchors.horizontalCenter: parent.horizontalCenter
+                }
+
+                Text {
+                    text: "Enter your credentials to unlock your vault"
+                    font.pixelSize: 14
+                    color: "#808080"
+                    anchors.horizontalCenter: parent.horizontalCenter
+                }
+            }
+
+            // Main card with all form fields
+            Rectangle {
+                width: parent.width
+                height: formColumn.height + 48
+                color: "#252525"
+                radius: 16
+
+                layer.enabled: true
+                layer.effect: MultiEffect {
+                    shadowEnabled: true
+                    shadowColor: "#40000000"
+                    shadowBlur: 1.0
+                    shadowVerticalOffset: 4
+                }
+
+                Column {
+                    id: formColumn
                     anchors.left: parent.left
                     anchors.right: parent.right
                     anchors.top: parent.top
-                    anchors.margins: 20
-                    spacing: 15
+                    anchors.margins: 24
+                    spacing: 20
 
-                    // Vault file selection
-                    Text {
-                        text: "Vault file:"
-                        color: "#e0e0e0"
+                    // Vault file section
+                    Column {
+                        width: parent.width
+                        spacing: 8
+
+                        Text {
+                            text: "Vault File"
+                            font.pixelSize: 13
+                            font.weight: Font.Medium
+                            color: "#a0a0a0"
+                        }
+
+                        Row {
+                            width: parent.width
+                            spacing: 10
+
+                            TextField {
+                                id: fileField
+                                width: parent.width - browseBtn.width - 10
+                                placeholderText: "Select your vault file..."
+                                readOnly: true
+                                text: selectedVaultPath
+                            }
+
+                            Button {
+                                id: browseBtn
+                                text: "Browse"
+                                flat: true
+                                onClicked: openFileDialog.open()
+                            }
+                        }
+
+                        Text {
+                            text: fileError
+                            color: "#ef5350"
+                            font.pixelSize: 12
+                            visible: fileError !== ""
+                        }
                     }
 
-                    RowLayout {
-                        Layout.fillWidth: true
+                    // Password section
+                    Column {
+                        width: parent.width
+                        spacing: 8
+
+                        Text {
+                            text: "Master Password"
+                            font.pixelSize: 13
+                            font.weight: Font.Medium
+                            color: "#a0a0a0"
+                        }
 
                         TextField {
-                            id: fileField
-                            Layout.fillWidth: true
-                            placeholderText: "Select vault file..."
-                            readOnly: true
-                            text: selectedVaultPath
+                            id: passwordField
+                            width: parent.width
+                            placeholderText: "Enter your master password"
+                            echoMode: TextInput.Password
+                            onAccepted: unlock()
                         }
 
-                        Button {
-                            text: "Browse..."
-                            onClicked: openFileDialog.open()
+                        Text {
+                            text: passwordError
+                            color: "#ef5350"
+                            font.pixelSize: 12
+                            visible: passwordError !== ""
                         }
-                    }
-                    Text {
-                        text: fileError
-                        color: "#ff6b6b"
-                        font.pixelSize: 11
-                        visible: fileError !== ""
-                    }
-
-                    // Password input
-                    Text {
-                        text: "Master password:"
-                        color: "#e0e0e0"
-                        Layout.topMargin: 10
-                    }
-
-                    TextField {
-                        id: passwordField
-                        Layout.fillWidth: true
-                        placeholderText: "Enter your master password"
-                        echoMode: TextInput.Password
-                        onAccepted: unlock()
-                    }
-                    Text {
-                        text: passwordError
-                        color: "#ff6b6b"
-                        font.pixelSize: 11
-                        visible: passwordError !== ""
                     }
                 }
             }
 
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: 10
+            // Buttons
+            Column {
+                width: parent.width
+                spacing: 12
 
                 Button {
+                    width: parent.width
+                    height: 48
+                    text: "Unlock Vault"
+                    highlighted: true
+                    font.weight: Font.Medium
+                    font.pixelSize: 15
+                    onClicked: unlock()
+                }
+
+                Rectangle {
+                    width: parent.width
+                    height: 1
+                    color: "#353535"
+                }
+
+                Button {
+                    width: parent.width
+                    height: 44
                     text: "Create New Vault"
                     flat: true
                     onClicked: createNewVault()
-                }
-
-                Item {
-                    Layout.fillWidth: true
-                }
-
-                Button {
-                    text: "Unlock"
-                    highlighted: true
-                    onClicked: unlock()
                 }
             }
         }

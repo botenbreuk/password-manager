@@ -2,69 +2,194 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import QtQuick.Controls.Material
+import QtQuick.Effects
 
 Item {
+    id: mainView
+
+    // Header bar
+    Rectangle {
+        id: headerBar
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.top: parent.top
+        height: 56
+        color: "#252525"
+
+        RowLayout {
+            anchors.fill: parent
+            anchors.leftMargin: 20
+            anchors.rightMargin: 20
+            spacing: 15
+
+            Text {
+                text: "\ue897"
+                font.family: "Material Icons"
+                font.pixelSize: 28
+                color: "#1976D2"
+            }
+
+            Text {
+                text: vaultController && vaultController.vaultName ? vaultController.vaultName : "Password Manager"
+                font.pixelSize: 18
+                font.weight: Font.Medium
+                color: "#ffffff"
+            }
+
+            Item { Layout.fillWidth: true }
+
+            RoundButton {
+                width: 40
+                height: 40
+                flat: true
+                ToolTip.visible: hovered
+                ToolTip.text: "Lock vault"
+                onClicked: {
+                    vaultController.closeVault()
+                    root.vaultUnlocked = false
+                }
+
+                Text {
+                    anchors.centerIn: parent
+                    text: "\ue898"
+                    font.family: "Material Icons"
+                    font.pixelSize: 22
+                    color: "#e0e0e0"
+                }
+            }
+        }
+
+        Rectangle {
+            anchors.bottom: parent.bottom
+            anchors.left: parent.left
+            anchors.right: parent.right
+            height: 1
+            color: "#3d3d3d"
+        }
+    }
+
     RowLayout {
         anchors.fill: parent
-        anchors.margins: 10
-        spacing: 10
+        anchors.topMargin: headerBar.height + 16
+        anchors.margins: 16
+        spacing: 16
 
-        // Password table (left, 70%)
+        // Password list (left panel)
         Rectangle {
             Layout.fillWidth: true
             Layout.fillHeight: true
             Layout.preferredWidth: 70
-            color: "#2d2d2d"
-            border.color: "#3d3d3d"
-            border.width: 1
-            radius: 4
+            color: "#252525"
+            radius: 12
+
+            layer.enabled: true
+            layer.effect: MultiEffect {
+                shadowEnabled: true
+                shadowColor: "#40000000"
+                shadowBlur: 0.5
+                shadowVerticalOffset: 2
+            }
 
             ColumnLayout {
                 anchors.fill: parent
-                anchors.margins: 1
                 spacing: 0
 
-                // Header
+                // Panel header
                 Rectangle {
                     Layout.fillWidth: true
-                    height: 40
-                    color: "#353535"
-                    radius: 4
+                    height: 52
+                    color: "transparent"
 
                     RowLayout {
                         anchors.fill: parent
-                        anchors.leftMargin: 10
-                        anchors.rightMargin: 10
+                        anchors.leftMargin: 20
+                        anchors.rightMargin: 20
                         spacing: 10
 
                         Text {
-                            text: "Website"
-                            font.bold: true
-                            color: "#e0e0e0"
+                            text: "Saved Passwords"
+                            font.pixelSize: 15
+                            font.weight: Font.DemiBold
+                            color: "#ffffff"
+                        }
+
+                        Rectangle {
+                            width: countText.width + 16
+                            height: 24
+                            radius: 12
+                            color: "#1976D2"
+                            visible: passwordList.count > 0
+
+                            Text {
+                                id: countText
+                                anchors.centerIn: parent
+                                text: passwordList.count
+                                font.pixelSize: 13
+                                font.weight: Font.Bold
+                                color: "#ffffff"
+                            }
+                        }
+
+                        Item { Layout.fillWidth: true }
+                    }
+
+                    Rectangle {
+                        anchors.bottom: parent.bottom
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.leftMargin: 16
+                        anchors.rightMargin: 16
+                        height: 1
+                        color: "#3a3a3a"
+                    }
+                }
+
+                // Column headers
+                Rectangle {
+                    Layout.fillWidth: true
+                    height: 36
+                    color: "#2a2a2a"
+
+                    RowLayout {
+                        anchors.fill: parent
+                        anchors.leftMargin: 20
+                        anchors.rightMargin: 20
+                        spacing: 10
+
+                        Text {
+                            text: "WEBSITE"
+                            font.pixelSize: 11
+                            font.weight: Font.Medium
+                            font.letterSpacing: 0.5
+                            color: "#808080"
                             Layout.fillWidth: true
                             Layout.preferredWidth: 1
                         }
                         Text {
-                            text: "Username"
-                            font.bold: true
-                            color: "#e0e0e0"
+                            text: "USERNAME"
+                            font.pixelSize: 11
+                            font.weight: Font.Medium
+                            font.letterSpacing: 0.5
+                            color: "#808080"
                             Layout.fillWidth: true
                             Layout.preferredWidth: 1
                         }
                         Text {
-                            text: "Password"
-                            font.bold: true
-                            color: "#e0e0e0"
+                            text: "PASSWORD"
+                            font.pixelSize: 11
+                            font.weight: Font.Medium
+                            font.letterSpacing: 0.5
+                            color: "#808080"
                             Layout.fillWidth: true
                             Layout.preferredWidth: 1
                         }
                         Item {
-                            Layout.preferredWidth: 100
+                            Layout.preferredWidth: 110
                         }
                     }
                 }
 
-                // List
+                // Password list
                 ListView {
                     id: passwordList
                     Layout.fillWidth: true
@@ -72,46 +197,70 @@ Item {
                     clip: true
                     model: vaultController ? vaultController.passwordModel : null
 
+                    ScrollBar.vertical: ScrollBar {
+                        policy: ScrollBar.AsNeeded
+                    }
+
                     delegate: Rectangle {
+                        id: delegateItem
                         width: passwordList.width
-                        height: 50
-                        color: index % 2 === 0 ? "#2d2d2d" : "#333333"
+                        height: 56
+                        color: mouseArea.containsMouse ? "#2f2f2f" : "transparent"
+
+                        Behavior on color {
+                            ColorAnimation { duration: 150 }
+                        }
+
+                        MouseArea {
+                            id: mouseArea
+                            anchors.fill: parent
+                            hoverEnabled: true
+                        }
 
                         RowLayout {
                             anchors.fill: parent
-                            anchors.leftMargin: 10
-                            anchors.rightMargin: 10
+                            anchors.leftMargin: 20
+                            anchors.rightMargin: 20
                             spacing: 10
 
                             Text {
                                 text: model.website
-                                color: "#e0e0e0"
+                                font.pixelSize: 14
+                                color: "#ffffff"
                                 elide: Text.ElideRight
                                 Layout.fillWidth: true
                                 Layout.preferredWidth: 1
                             }
                             Text {
                                 text: model.username
-                                color: "#b0b0b0"
+                                font.pixelSize: 14
+                                color: "#a0a0a0"
                                 elide: Text.ElideRight
                                 Layout.fillWidth: true
                                 Layout.preferredWidth: 1
                             }
                             Text {
-                                text: model.visible ? model.password : "••••••••"
-                                color: "#b0b0b0"
+                                text: model.visible ? model.password : "\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022"
+                                font.pixelSize: 14
+                                color: "#a0a0a0"
+                                font.letterSpacing: model.visible ? 0 : 2
                                 elide: Text.ElideRight
                                 Layout.fillWidth: true
                                 Layout.preferredWidth: 1
                             }
 
                             Row {
-                                spacing: 2
-                                Layout.preferredWidth: 100
+                                spacing: 4
+                                Layout.preferredWidth: 110
+                                opacity: mouseArea.containsMouse ? 1 : 0.6
+
+                                Behavior on opacity {
+                                    NumberAnimation { duration: 150 }
+                                }
 
                                 RoundButton {
-                                    width: 32
-                                    height: 32
+                                    width: 34
+                                    height: 34
                                     flat: true
                                     ToolTip.visible: hovered
                                     ToolTip.text: "Copy password"
@@ -126,24 +275,24 @@ Item {
                                     }
                                 }
                                 RoundButton {
-                                    width: 32
-                                    height: 32
+                                    width: 34
+                                    height: 34
                                     flat: true
                                     ToolTip.visible: hovered
-                                    ToolTip.text: "Show/hide password"
+                                    ToolTip.text: model.visible ? "Hide password" : "Show password"
                                     onClicked: vaultController.togglePasswordVisibility(index)
 
                                     Text {
                                         anchors.centerIn: parent
-                                        text: model.visible ? "\ue8f5" : "\ue8f4"
+                                        text: model.visible ? "\ue8f4" : "\ue8f5"
                                         font.family: "Material Icons"
                                         font.pixelSize: 18
                                         color: "#e0e0e0"
                                     }
                                 }
                                 RoundButton {
-                                    width: 32
-                                    height: 32
+                                    width: 34
+                                    height: 34
                                     flat: true
                                     ToolTip.visible: hovered
                                     ToolTip.text: "Delete"
@@ -154,96 +303,224 @@ Item {
                                         text: "\ue872"
                                         font.family: "Material Icons"
                                         font.pixelSize: 18
-                                        color: "#ff6b6b"
+                                        color: "#ef5350"
                                     }
                                 }
                             }
                         }
+
+                        Rectangle {
+                            anchors.bottom: parent.bottom
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            anchors.leftMargin: 20
+                            anchors.rightMargin: 20
+                            height: 1
+                            color: "#2a2a2a"
+                            visible: index < passwordList.count - 1
+                        }
                     }
 
                     // Empty state
-                    Text {
-                        anchors.centerIn: parent
-                        text: "No passwords stored yet"
-                        color: "#666"
+                    Item {
+                        anchors.fill: parent
                         visible: passwordList.count === 0
+
+                        Column {
+                            anchors.centerIn: parent
+                            spacing: 12
+
+                            Text {
+                                text: "\ue899"
+                                font.family: "Material Icons"
+                                font.pixelSize: 64
+                                color: "#404040"
+                                anchors.horizontalCenter: parent.horizontalCenter
+                            }
+
+                            Text {
+                                text: "No passwords yet"
+                                font.pixelSize: 16
+                                font.weight: Font.Medium
+                                color: "#606060"
+                                anchors.horizontalCenter: parent.horizontalCenter
+                            }
+
+                            Text {
+                                text: "Add your first password using the form"
+                                font.pixelSize: 13
+                                color: "#505050"
+                                anchors.horizontalCenter: parent.horizontalCenter
+                            }
+                        }
                     }
                 }
             }
         }
 
-        // Entry form (right, 30%)
+        // Entry form (right panel)
         Rectangle {
             Layout.fillHeight: true
-            Layout.preferredWidth: 250
-            color: "#2d2d2d"
-            border.color: "#3d3d3d"
-            border.width: 1
-            radius: 4
+            Layout.preferredWidth: 280
+            color: "#252525"
+            radius: 12
+
+            layer.enabled: true
+            layer.effect: MultiEffect {
+                shadowEnabled: true
+                shadowColor: "#40000000"
+                shadowBlur: 0.5
+                shadowVerticalOffset: 2
+            }
 
             ColumnLayout {
                 anchors.fill: parent
-                anchors.margins: 15
-                spacing: 10
+                anchors.margins: 20
+                spacing: 16
 
-                Text {
-                    text: "Add New Entry"
-                    font.bold: true
-                    font.pixelSize: 16
-                    color: "#e0e0e0"
+                // Form header
+                Row {
+                    spacing: 10
+                    Layout.bottomMargin: 4
+
+                    Text {
+                        text: "\ue145"
+                        font.family: "Material Icons"
+                        font.pixelSize: 22
+                        color: "#1976D2"
+                    }
+
+                    Text {
+                        text: "Add New Entry"
+                        font.pixelSize: 16
+                        font.weight: Font.DemiBold
+                        color: "#ffffff"
+                    }
+                }
+
+                Rectangle {
+                    Layout.fillWidth: true
+                    height: 1
+                    color: "#3a3a3a"
                 }
 
                 // Website field
-                TextField {
-                    id: websiteField
+                Column {
                     Layout.fillWidth: true
-                    placeholderText: "Website"
-                    onAccepted: usernameField.focus = true
-                }
-                Text {
-                    text: vaultController ? vaultController.urlError : ""
-                    color: "#ff6b6b"
-                    font.pixelSize: 11
-                    visible: vaultController && vaultController.urlError !== ""
+                    spacing: 6
+
+                    Text {
+                        text: "Website"
+                        font.pixelSize: 12
+                        font.weight: Font.Medium
+                        color: "#909090"
+                    }
+
+                    TextField {
+                        id: websiteField
+                        width: parent.width
+                        placeholderText: "e.g., github.com"
+                        onAccepted: usernameField.focus = true
+                    }
+
+                    Text {
+                        text: vaultController ? vaultController.urlError : ""
+                        color: "#ef5350"
+                        font.pixelSize: 11
+                        visible: vaultController && vaultController.urlError !== ""
+                    }
                 }
 
                 // Username field
-                TextField {
-                    id: usernameField
+                Column {
                     Layout.fillWidth: true
-                    placeholderText: "Username"
-                    onAccepted: passwordField.focus = true
-                }
-                Text {
-                    text: vaultController ? vaultController.usernameError : ""
-                    color: "#ff6b6b"
-                    font.pixelSize: 11
-                    visible: vaultController && vaultController.usernameError !== ""
+                    spacing: 6
+
+                    Text {
+                        text: "Username"
+                        font.pixelSize: 12
+                        font.weight: Font.Medium
+                        color: "#909090"
+                    }
+
+                    TextField {
+                        id: usernameField
+                        width: parent.width
+                        placeholderText: "e.g., john@email.com"
+                        onAccepted: passwordField.focus = true
+                    }
+
+                    Text {
+                        text: vaultController ? vaultController.usernameError : ""
+                        color: "#ef5350"
+                        font.pixelSize: 11
+                        visible: vaultController && vaultController.usernameError !== ""
+                    }
                 }
 
                 // Password field
-                TextField {
-                    id: passwordField
+                Column {
                     Layout.fillWidth: true
-                    placeholderText: "Password"
-                    echoMode: TextInput.Password
-                    onAccepted: addEntry()
-                }
-                Text {
-                    text: vaultController ? vaultController.passwordError : ""
-                    color: "#ff6b6b"
-                    font.pixelSize: 11
-                    visible: vaultController && vaultController.passwordError !== ""
-                }
+                    spacing: 6
 
-                Button {
-                    text: "Add"
-                    Layout.fillWidth: true
-                    onClicked: addEntry()
+                    Text {
+                        text: "Password"
+                        font.pixelSize: 12
+                        font.weight: Font.Medium
+                        color: "#909090"
+                    }
+
+                    TextField {
+                        id: passwordField
+                        width: parent.width
+                        placeholderText: "Enter password"
+                        echoMode: TextInput.Password
+                        onAccepted: addEntry()
+                    }
+
+                    Text {
+                        text: vaultController ? vaultController.passwordError : ""
+                        color: "#ef5350"
+                        font.pixelSize: 11
+                        visible: vaultController && vaultController.passwordError !== ""
+                    }
                 }
 
                 Item {
                     Layout.fillHeight: true
+                    Layout.minimumHeight: 10
+                }
+
+                Button {
+                    id: addButton
+                    text: "Add Password"
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 44
+                    highlighted: true
+                    font.weight: Font.Medium
+                    onClicked: addEntry()
+
+                    icon.source: ""
+                    contentItem: Row {
+                        spacing: 8
+                        anchors.centerIn: parent
+
+                        Text {
+                            text: "\ue145"
+                            font.family: "Material Icons"
+                            font.pixelSize: 18
+                            color: "#ffffff"
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+
+                        Text {
+                            text: "Add Password"
+                            font.pixelSize: 14
+                            font.weight: Font.Medium
+                            color: "#ffffff"
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                    }
                 }
             }
         }
