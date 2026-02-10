@@ -284,7 +284,7 @@ Dialog {
         title: "Save Vault File"
         fileMode: FileDialog.SaveFile
         nameFilters: ["Vault Files (*.vault)"]
-        currentFile: "file:///" + (nameField.text || "vault") + ".vault"
+        currentFile: "file:///" + (nameField.text ? nameField.text.toLowerCase().replace(/ /g, "-") : "vault") + ".vault"
         onAccepted: {
             var path = selectedFile.toString()
             if (path.startsWith("file://")) {
