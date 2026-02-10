@@ -297,8 +297,20 @@ Item {
                                     onClicked: vaultController.copyUsername(index)
                                 }
 
-                                ToolTip.visible: usernameMouseArea.containsMouse
-                                ToolTip.text: "Click to copy"
+                                ToolTip {
+                                    visible: usernameMouseArea.containsMouse
+                                    text: "Click to copy"
+                                    y: -height - 5
+                                    contentItem: Text {
+                                        text: "Click to copy"
+                                        color: "#ffffff"
+                                        font.pixelSize: 12
+                                    }
+                                    background: Rectangle {
+                                        color: "#424242"
+                                        radius: 4
+                                    }
+                                }
                             }
 
                             // Password - clickable to copy
@@ -327,8 +339,20 @@ Item {
                                     onClicked: vaultController.copyPassword(index)
                                 }
 
-                                ToolTip.visible: passwordMouseArea.containsMouse
-                                ToolTip.text: "Click to copy"
+                                ToolTip {
+                                    visible: passwordMouseArea.containsMouse
+                                    text: "Click to copy"
+                                    y: -height - 5
+                                    contentItem: Text {
+                                        text: "Click to copy"
+                                        color: "#ffffff"
+                                        font.pixelSize: 12
+                                    }
+                                    background: Rectangle {
+                                        color: "#424242"
+                                        radius: 4
+                                    }
+                                }
                             }
 
                             // TOTP code display with timer
@@ -405,8 +429,20 @@ Item {
                                     onClicked: vaultController.copyTotp(index)
                                 }
 
-                                ToolTip.visible: totpMouseArea.containsMouse
-                                ToolTip.text: "Click to copy"
+                                ToolTip {
+                                    visible: totpMouseArea.containsMouse
+                                    text: "Click to copy"
+                                    y: -height - 5
+                                    contentItem: Text {
+                                        text: "Click to copy"
+                                        color: "#ffffff"
+                                        font.pixelSize: 12
+                                    }
+                                    background: Rectangle {
+                                        color: "#424242"
+                                        radius: 4
+                                    }
+                                }
                             }
 
                             // Empty placeholder when no TOTP
