@@ -35,7 +35,7 @@ class VaultController(QObject):
 
     @pyqtProperty(str, notify=vaultNameChanged)
     def vaultName(self):
-        return self._vault_name
+        return self._vault_name.capitalize() if self._vault_name else ""
 
     @pyqtProperty(str, notify=urlErrorChanged)
     def urlError(self):
