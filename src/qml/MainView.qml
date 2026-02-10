@@ -212,7 +212,7 @@ Item {
                             Layout.preferredWidth: 90
                         }
                         Item {
-                            Layout.preferredWidth: 160
+                            Layout.preferredWidth: 100
                         }
                     }
                 }
@@ -270,32 +270,78 @@ Item {
                                 }
                             }
 
-                            Text {
-                                text: model.username
-                                font.pixelSize: 14
-                                color: "#a0a0a0"
-                                elide: Text.ElideRight
+                            // Username - clickable to copy
+                            Rectangle {
                                 Layout.fillWidth: true
                                 Layout.preferredWidth: 1
+                                height: 28
+                                color: "transparent"
+                                border.color: usernameMouseArea.containsMouse ? "#505050" : "transparent"
+                                border.width: 1
+                                radius: 14
+
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: model.username
+                                    font.pixelSize: 14
+                                    color: usernameMouseArea.containsMouse ? "#ffffff" : "#a0a0a0"
+                                }
+
+                                MouseArea {
+                                    id: usernameMouseArea
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: vaultController.copyUsername(index)
+                                }
+
+                                ToolTip.visible: usernameMouseArea.containsMouse
+                                ToolTip.text: "Click to copy"
                             }
-                            Text {
-                                text: model.visible ? model.password : "\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022"
-                                font.pixelSize: 14
-                                color: "#a0a0a0"
-                                font.letterSpacing: model.visible ? 0 : 2
-                                elide: Text.ElideRight
+
+                            // Password - clickable to copy
+                            Rectangle {
                                 Layout.fillWidth: true
                                 Layout.preferredWidth: 1
+                                height: 28
+                                color: "transparent"
+                                border.color: passwordMouseArea.containsMouse ? "#505050" : "transparent"
+                                border.width: 1
+                                radius: 14
+
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: model.visible ? model.password : "\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022"
+                                    font.pixelSize: 14
+                                    color: passwordMouseArea.containsMouse ? "#ffffff" : "#a0a0a0"
+                                    font.letterSpacing: model.visible ? 0 : 2
+                                }
+
+                                MouseArea {
+                                    id: passwordMouseArea
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: vaultController.copyPassword(index)
+                                }
+
+                                ToolTip.visible: passwordMouseArea.containsMouse
+                                ToolTip.text: "Click to copy"
                             }
 
                             // TOTP code display
-                            Row {
+                            Rectangle {
                                 Layout.preferredWidth: 90
-                                spacing: 6
+                                height: 28
+                                color: "transparent"
+                                border.color: totpMouseArea.containsMouse ? "#3d8b40" : "transparent"
+                                border.width: 1
+                                radius: 14
                                 visible: model.hasTotp
 
                                 Text {
                                     id: totpCodeText
+                                    anchors.centerIn: parent
                                     text: {
                                         // Reference totpRefreshTrigger to force refresh
                                         var trigger = totpRefreshTrigger
@@ -305,29 +351,30 @@ Item {
                                     font.weight: Font.Medium
                                     font.family: "Menlo"
                                     color: totpMouseArea.containsMouse ? "#66BB6A" : "#4CAF50"
-
-                                    MouseArea {
-                                        id: totpMouseArea
-                                        anchors.fill: parent
-                                        hoverEnabled: true
-                                        cursorShape: Qt.PointingHandCursor
-                                        onClicked: vaultController.copyTotp(index)
-                                    }
-
-                                    ToolTip.visible: totpMouseArea.containsMouse
-                                    ToolTip.text: "Click to copy"
                                 }
+
+                                MouseArea {
+                                    id: totpMouseArea
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: vaultController.copyTotp(index)
+                                }
+
+                                ToolTip.visible: totpMouseArea.containsMouse
+                                ToolTip.text: "Click to copy"
                             }
 
                             // Empty placeholder when no TOTP
                             Item {
                                 Layout.preferredWidth: 90
+                                height: 28
                                 visible: !model.hasTotp
                             }
 
                             Row {
                                 spacing: 2
-                                Layout.preferredWidth: 160
+                                Layout.preferredWidth: 100
                                 opacity: mouseArea.containsMouse ? 1 : 0.6
 
                                 Behavior on opacity {
@@ -348,38 +395,6 @@ Item {
                                         font.family: "Material Icons"
                                         font.pixelSize: 16
                                         color: "#1976D2"
-                                    }
-                                }
-                                RoundButton {
-                                    width: 32
-                                    height: 32
-                                    flat: true
-                                    ToolTip.visible: hovered
-                                    ToolTip.text: "Copy username"
-                                    onClicked: vaultController.copyUsername(index)
-
-                                    Text {
-                                        anchors.centerIn: parent
-                                        text: "\ue7fd"
-                                        font.family: "Material Icons"
-                                        font.pixelSize: 16
-                                        color: "#e0e0e0"
-                                    }
-                                }
-                                RoundButton {
-                                    width: 32
-                                    height: 32
-                                    flat: true
-                                    ToolTip.visible: hovered
-                                    ToolTip.text: "Copy password"
-                                    onClicked: vaultController.copyPassword(index)
-
-                                    Text {
-                                        anchors.centerIn: parent
-                                        text: "\ue14d"
-                                        font.family: "Material Icons"
-                                        font.pixelSize: 16
-                                        color: "#e0e0e0"
                                     }
                                 }
                                 RoundButton {
