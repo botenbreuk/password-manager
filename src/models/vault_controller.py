@@ -5,6 +5,8 @@ from PyQt6.QtGui import QClipboard, QGuiApplication
 
 from vault import VaultManager
 from models.password_model import PasswordListModel
+from models.recent_vaults_model import RecentVaultsModel
+from settings import SettingsManager
 from validators import validate_url, validate_username, validate_password
 
 
@@ -19,19 +21,31 @@ class VaultController(QObject):
     urlErrorChanged = pyqtSignal()
     usernameErrorChanged = pyqtSignal()
     passwordErrorChanged = pyqtSignal()
+    recentVaultsChanged = pyqtSignal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
         self._vault = VaultManager()
         self._password_model = PasswordListModel(self)
+        self._recent_vaults_model = RecentVaultsModel(self)
+        self._settings = SettingsManager()
         self._vault_name = ""
         self._url_error = ""
         self._username_error = ""
         self._password_error = ""
+        self._load_recent_vaults()
+
+    def _load_recent_vaults(self):
+        vaults = self._settings.get_recent_vaults()
+        self._recent_vaults_model.load_vaults(vaults)
 
     @pyqtProperty(PasswordListModel, constant=True)
     def passwordModel(self):
         return self._password_model
+
+    @pyqtProperty(RecentVaultsModel, notify=recentVaultsChanged)
+    def recentVaultsModel(self):
+        return self._recent_vaults_model
 
     @pyqtProperty(str, notify=vaultNameChanged)
     def vaultName(self):
@@ -62,6 +76,9 @@ class VaultController(QObject):
             self._vault_name = name
             self.vaultNameChanged.emit()
             self._load_entries()
+            self._settings.add_recent_vault(path, name)
+            self._load_recent_vaults()
+            self.recentVaultsChanged.emit()
             self.vaultCreated.emit()
         except Exception as e:
             self.vaultError.emit(str(e))
@@ -72,9 +89,30 @@ class VaultController(QObject):
             self._vault_name = self._vault.vault_name
             self.vaultNameChanged.emit()
             self._load_entries()
+            self._settings.add_recent_vault(path, self._vault_name)
+            self._load_recent_vaults()
+            self.recentVaultsChanged.emit()
             self.vaultOpened.emit()
             return True
         return False
+
+    @pyqtSlot(int, result=str)
+    def getRecentVaultPath(self, row: int) -> str:
+        return self._recent_vaults_model.get_path(row)
+
+    @pyqtSlot(int)
+    def removeRecentVault(self, row: int):
+        path = self._recent_vaults_model.get_path(row)
+        if path:
+            self._settings.remove_recent_vault(path)
+            self._recent_vaults_model.remove_vault(row)
+            self.recentVaultsChanged.emit()
+
+    @pyqtSlot()
+    def clearRecentVaults(self):
+        self._settings.clear_recent_vaults()
+        self._recent_vaults_model.load_vaults([])
+        self.recentVaultsChanged.emit()
 
     @pyqtSlot()
     def closeVault(self):
