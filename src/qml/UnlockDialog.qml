@@ -146,7 +146,7 @@ Item {
                                 onClicked: {
                                     selectedVaultPath = model.path
                                     fileField.text = model.path
-                                    passwordField.focus = true
+                                    passwordField.forceActiveFocus()
                                 }
                             }
 

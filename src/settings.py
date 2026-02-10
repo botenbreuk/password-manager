@@ -1,3 +1,4 @@
+import sys
 from pathlib import Path
 from PyQt6.QtCore import QSettings
 
@@ -6,7 +7,10 @@ class SettingsManager:
     MAX_RECENT_VAULTS = 5
 
     def __init__(self):
-        self._settings = QSettings("PasswordManager", "PasswordManager")
+        if sys.platform == "win32":
+            self._settings = QSettings(QSettings.Format.IniFormat, QSettings.Scope.UserScope, "PasswordManager", "PasswordManager")
+        else:
+            self._settings = QSettings("PasswordManager", "PasswordManager")
 
     def get_recent_vaults(self) -> list[dict]:
         """Returns list of recent vaults with name and path."""
