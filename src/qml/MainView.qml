@@ -13,6 +13,7 @@ Item {
 
     // TOTP refresh trigger (changes every 30 seconds)
     property int totpRefreshTrigger: 0
+    property int totpRemainingSeconds: 30 - (Math.floor(Date.now() / 1000) % 30)
 
     Timer {
         id: totpTimer
@@ -24,6 +25,7 @@ Item {
             if (currentPeriod !== totpRefreshTrigger) {
                 totpRefreshTrigger = currentPeriod
             }
+            totpRemainingSeconds = 30 - (Math.floor(Date.now() / 1000) % 30)
         }
     }
 
@@ -209,7 +211,7 @@ Item {
                             font.weight: Font.Medium
                             font.letterSpacing: 0.5
                             color: "#808080"
-                            Layout.preferredWidth: 90
+                            Layout.preferredWidth: 115
                         }
                         Item {
                             Layout.preferredWidth: 100
@@ -329,9 +331,9 @@ Item {
                                 ToolTip.text: "Click to copy"
                             }
 
-                            // TOTP code display
+                            // TOTP code display with timer
                             Rectangle {
-                                Layout.preferredWidth: 90
+                                Layout.preferredWidth: 115
                                 height: 28
                                 color: "transparent"
                                 border.color: totpMouseArea.containsMouse ? "#3d8b40" : "transparent"
@@ -339,18 +341,60 @@ Item {
                                 radius: 14
                                 visible: model.hasTotp
 
-                                Text {
-                                    id: totpCodeText
+                                Row {
                                     anchors.centerIn: parent
-                                    text: {
-                                        // Reference totpRefreshTrigger to force refresh
-                                        var trigger = totpRefreshTrigger
-                                        return model.hasTotp ? vaultController.generateTotp(index) : ""
+                                    spacing: 8
+
+                                    Text {
+                                        id: totpCodeText
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        text: {
+                                            // Reference totpRefreshTrigger to force refresh
+                                            var trigger = totpRefreshTrigger
+                                            return model.hasTotp ? vaultController.generateTotp(index) : ""
+                                        }
+                                        font.pixelSize: 14
+                                        font.weight: Font.Medium
+                                        font.family: "Menlo"
+                                        color: totpMouseArea.containsMouse ? "#66BB6A" : "#4CAF50"
                                     }
-                                    font.pixelSize: 14
-                                    font.weight: Font.Medium
-                                    font.family: "Menlo"
-                                    color: totpMouseArea.containsMouse ? "#66BB6A" : "#4CAF50"
+
+                                    // Circular timer
+                                    Canvas {
+                                        id: timerCanvas
+                                        width: 18
+                                        height: 18
+                                        anchors.verticalCenter: parent.verticalCenter
+
+                                        property real progress: totpRemainingSeconds / 30.0
+                                        property color circleColor: totpRemainingSeconds <= 5 ? "#ef5350" : "#4CAF50"
+
+                                        onProgressChanged: requestPaint()
+                                        onCircleColorChanged: requestPaint()
+
+                                        onPaint: {
+                                            var ctx = getContext("2d")
+                                            ctx.reset()
+
+                                            var centerX = width / 2
+                                            var centerY = height / 2
+                                            var radius = width / 2 - 2
+
+                                            // Background circle
+                                            ctx.beginPath()
+                                            ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI)
+                                            ctx.strokeStyle = "#404040"
+                                            ctx.lineWidth = 2
+                                            ctx.stroke()
+
+                                            // Progress arc
+                                            ctx.beginPath()
+                                            ctx.arc(centerX, centerY, radius, -Math.PI / 2, -Math.PI / 2 + (2 * Math.PI * progress))
+                                            ctx.strokeStyle = circleColor
+                                            ctx.lineWidth = 2
+                                            ctx.stroke()
+                                        }
+                                    }
                                 }
 
                                 MouseArea {
@@ -367,7 +411,7 @@ Item {
 
                             // Empty placeholder when no TOTP
                             Item {
-                                Layout.preferredWidth: 90
+                                Layout.preferredWidth: 115
                                 height: 28
                                 visible: !model.hasTotp
                             }
