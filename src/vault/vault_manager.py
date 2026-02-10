@@ -10,6 +10,7 @@ import sqlcipher3
 
 VAULT_INFO_FILE = "vault.json"
 VAULT_DB_FILE = "vault.db"
+VAULT_VERSION = "1.0"
 
 
 class VaultManager:
@@ -17,6 +18,7 @@ class VaultManager:
         self.vault_path: Optional[Path] = None
         self.master_password: Optional[str] = None
         self.vault_name: Optional[str] = None
+        self.vault_version: Optional[str] = None
         self._db_path: Optional[Path] = None
         self._conn: Optional[sqlcipher3.Connection] = None
 
@@ -27,6 +29,7 @@ class VaultManager:
     def create(self, path: Path, name: str, master_password: str):
         self.vault_path = path
         self.vault_name = name
+        self.vault_version = VAULT_VERSION
         self.master_password = master_password
 
         # Create temporary encrypted database
@@ -47,6 +50,7 @@ class VaultManager:
                 # Read vault info
                 vault_info = json.loads(zf.read(VAULT_INFO_FILE))
                 self.vault_name = vault_info.get("name", "Unknown")
+                self.vault_version = vault_info.get("version", "1.0")
 
                 # Extract encrypted database to temp file
                 self._db_path = Path(tempfile.mktemp(suffix=".db"))
@@ -66,6 +70,7 @@ class VaultManager:
             self.vault_path = None
             self.master_password = None
             self.vault_name = None
+            self.vault_version = None
             if self._db_path and self._db_path.exists():
                 os.remove(self._db_path)
                 self._db_path = None
@@ -87,7 +92,7 @@ class VaultManager:
         self._conn.commit()
 
         # Create vault info
-        vault_info = {"name": self.vault_name, "version": "1.0"}
+        vault_info = {"name": self.vault_name, "version": VAULT_VERSION}
 
         # Write zip file with encrypted database
         with zipfile.ZipFile(self.vault_path, 'w', zipfile.ZIP_DEFLATED) as zf:
