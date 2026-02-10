@@ -11,6 +11,22 @@ Item {
     property bool editMode: false
     property int editingRow: -1
 
+    // TOTP refresh trigger (changes every 30 seconds)
+    property int totpRefreshTrigger: 0
+
+    Timer {
+        id: totpTimer
+        interval: 1000
+        running: true
+        repeat: true
+        onTriggered: {
+            var currentPeriod = Math.floor(Date.now() / 1000 / 30)
+            if (currentPeriod !== totpRefreshTrigger) {
+                totpRefreshTrigger = currentPeriod
+            }
+        }
+    }
+
     // Header bar
     Rectangle {
         id: headerBar
@@ -187,8 +203,16 @@ Item {
                             Layout.fillWidth: true
                             Layout.preferredWidth: 1
                         }
+                        Text {
+                            text: "TOTP"
+                            font.pixelSize: 11
+                            font.weight: Font.Medium
+                            font.letterSpacing: 0.5
+                            color: "#808080"
+                            Layout.preferredWidth: 90
+                        }
                         Item {
-                            Layout.preferredWidth: 144
+                            Layout.preferredWidth: 160
                         }
                     }
                 }
@@ -227,14 +251,25 @@ Item {
                             anchors.rightMargin: 20
                             spacing: 10
 
+                            // Website - clickable link
                             Text {
                                 text: model.website
                                 font.pixelSize: 14
-                                color: "#ffffff"
+                                color: websiteMouseArea.containsMouse ? "#1976D2" : "#ffffff"
+                                font.underline: websiteMouseArea.containsMouse
                                 elide: Text.ElideRight
                                 Layout.fillWidth: true
                                 Layout.preferredWidth: 1
+
+                                MouseArea {
+                                    id: websiteMouseArea
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: vaultController.openWebsite(index)
+                                }
                             }
+
                             Text {
                                 text: model.username
                                 font.pixelSize: 14
@@ -253,9 +288,46 @@ Item {
                                 Layout.preferredWidth: 1
                             }
 
+                            // TOTP code display
                             Row {
-                                spacing: 4
-                                Layout.preferredWidth: 144
+                                Layout.preferredWidth: 90
+                                spacing: 6
+                                visible: model.hasTotp
+
+                                Text {
+                                    id: totpCodeText
+                                    text: {
+                                        // Reference totpRefreshTrigger to force refresh
+                                        var trigger = totpRefreshTrigger
+                                        return model.hasTotp ? vaultController.generateTotp(index) : ""
+                                    }
+                                    font.pixelSize: 14
+                                    font.weight: Font.Medium
+                                    font.family: "Menlo"
+                                    color: totpMouseArea.containsMouse ? "#66BB6A" : "#4CAF50"
+
+                                    MouseArea {
+                                        id: totpMouseArea
+                                        anchors.fill: parent
+                                        hoverEnabled: true
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: vaultController.copyTotp(index)
+                                    }
+
+                                    ToolTip.visible: totpMouseArea.containsMouse
+                                    ToolTip.text: "Click to copy"
+                                }
+                            }
+
+                            // Empty placeholder when no TOTP
+                            Item {
+                                Layout.preferredWidth: 90
+                                visible: !model.hasTotp
+                            }
+
+                            Row {
+                                spacing: 2
+                                Layout.preferredWidth: 160
                                 opacity: mouseArea.containsMouse ? 1 : 0.6
 
                                 Behavior on opacity {
@@ -263,8 +335,8 @@ Item {
                                 }
 
                                 RoundButton {
-                                    width: 34
-                                    height: 34
+                                    width: 32
+                                    height: 32
                                     flat: true
                                     ToolTip.visible: hovered
                                     ToolTip.text: "Edit"
@@ -274,13 +346,29 @@ Item {
                                         anchors.centerIn: parent
                                         text: "\ue3c9"
                                         font.family: "Material Icons"
-                                        font.pixelSize: 18
+                                        font.pixelSize: 16
                                         color: "#1976D2"
                                     }
                                 }
                                 RoundButton {
-                                    width: 34
-                                    height: 34
+                                    width: 32
+                                    height: 32
+                                    flat: true
+                                    ToolTip.visible: hovered
+                                    ToolTip.text: "Copy username"
+                                    onClicked: vaultController.copyUsername(index)
+
+                                    Text {
+                                        anchors.centerIn: parent
+                                        text: "\ue7fd"
+                                        font.family: "Material Icons"
+                                        font.pixelSize: 16
+                                        color: "#e0e0e0"
+                                    }
+                                }
+                                RoundButton {
+                                    width: 32
+                                    height: 32
                                     flat: true
                                     ToolTip.visible: hovered
                                     ToolTip.text: "Copy password"
@@ -290,13 +378,13 @@ Item {
                                         anchors.centerIn: parent
                                         text: "\ue14d"
                                         font.family: "Material Icons"
-                                        font.pixelSize: 18
+                                        font.pixelSize: 16
                                         color: "#e0e0e0"
                                     }
                                 }
                                 RoundButton {
-                                    width: 34
-                                    height: 34
+                                    width: 32
+                                    height: 32
                                     flat: true
                                     ToolTip.visible: hovered
                                     ToolTip.text: model.visible ? "Hide password" : "Show password"
@@ -306,13 +394,13 @@ Item {
                                         anchors.centerIn: parent
                                         text: model.visible ? "\ue8f4" : "\ue8f5"
                                         font.family: "Material Icons"
-                                        font.pixelSize: 18
+                                        font.pixelSize: 16
                                         color: "#e0e0e0"
                                     }
                                 }
                                 RoundButton {
-                                    width: 34
-                                    height: 34
+                                    width: 32
+                                    height: 32
                                     flat: true
                                     ToolTip.visible: hovered
                                     ToolTip.text: "Delete"
@@ -322,7 +410,7 @@ Item {
                                         anchors.centerIn: parent
                                         text: "\ue872"
                                         font.family: "Material Icons"
-                                        font.pixelSize: 18
+                                        font.pixelSize: 16
                                         color: "#ef5350"
                                     }
                                 }
@@ -396,7 +484,7 @@ Item {
             ColumnLayout {
                 anchors.fill: parent
                 anchors.margins: 20
-                spacing: 16
+                spacing: 12
 
                 // Form header
                 Row {
@@ -427,7 +515,7 @@ Item {
                 // Website field
                 Column {
                     Layout.fillWidth: true
-                    spacing: 6
+                    spacing: 4
 
                     Text {
                         text: "Website"
@@ -454,7 +542,7 @@ Item {
                 // Username field
                 Column {
                     Layout.fillWidth: true
-                    spacing: 6
+                    spacing: 4
 
                     Text {
                         text: "Username"
@@ -481,7 +569,7 @@ Item {
                 // Password field
                 Column {
                     Layout.fillWidth: true
-                    spacing: 6
+                    spacing: 4
 
                     Text {
                         text: "Password"
@@ -495,7 +583,7 @@ Item {
                         width: parent.width
                         placeholderText: "Enter password"
                         echoMode: TextInput.Password
-                        onAccepted: editMode ? updateEntry() : addEntry()
+                        onAccepted: totpField.focus = true
                     }
 
                     Text {
@@ -503,6 +591,40 @@ Item {
                         color: "#ef5350"
                         font.pixelSize: 11
                         visible: vaultController && vaultController.passwordError !== ""
+                    }
+                }
+
+                // TOTP field
+                Column {
+                    Layout.fillWidth: true
+                    spacing: 4
+
+                    Text {
+                        text: "TOTP Key (optional)"
+                        font.pixelSize: 12
+                        font.weight: Font.Medium
+                        color: "#909090"
+                    }
+
+                    TextField {
+                        id: totpField
+                        width: parent.width
+                        placeholderText: "e.g., JBSWY3DPEHPK3PXP"
+                        onAccepted: editMode ? updateEntry() : addEntry()
+                    }
+
+                    Text {
+                        text: vaultController ? vaultController.totpError : ""
+                        color: "#ef5350"
+                        font.pixelSize: 11
+                        visible: vaultController && vaultController.totpError !== ""
+                    }
+
+                    Text {
+                        text: "Base32 secret for 2FA codes"
+                        font.pixelSize: 10
+                        color: "#606060"
+                        visible: !vaultController || vaultController.totpError === ""
                     }
                 }
 
@@ -585,6 +707,7 @@ Item {
         websiteField.text = vaultController.getWebsite(row)
         usernameField.text = vaultController.getUsername(row)
         passwordField.text = vaultController.getPassword(row)
+        totpField.text = vaultController.getTotpKey(row)
         websiteField.focus = true
     }
 
@@ -594,19 +717,21 @@ Item {
         websiteField.text = ""
         usernameField.text = ""
         passwordField.text = ""
+        totpField.text = ""
     }
 
     function addEntry() {
-        if (vaultController && vaultController.addEntry(websiteField.text, usernameField.text, passwordField.text)) {
+        if (vaultController && vaultController.addEntry(websiteField.text, usernameField.text, passwordField.text, totpField.text)) {
             websiteField.text = ""
             usernameField.text = ""
             passwordField.text = ""
+            totpField.text = ""
             websiteField.focus = true
         }
     }
 
     function updateEntry() {
-        if (vaultController && vaultController.updateEntry(editingRow, websiteField.text, usernameField.text, passwordField.text)) {
+        if (vaultController && vaultController.updateEntry(editingRow, websiteField.text, usernameField.text, passwordField.text, totpField.text)) {
             cancelEdit()
         }
     }

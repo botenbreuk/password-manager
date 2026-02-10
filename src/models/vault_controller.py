@@ -1,13 +1,14 @@
 from pathlib import Path
 
 from PyQt6.QtCore import QObject, pyqtSignal, pyqtSlot, pyqtProperty, QUrl
-from PyQt6.QtGui import QClipboard, QGuiApplication
+from PyQt6.QtGui import QClipboard, QGuiApplication, QDesktopServices
 
 from vault import VaultManager
 from models.password_model import PasswordListModel
 from models.recent_vaults_model import RecentVaultsModel
 from settings import SettingsManager
-from validators import validate_url, validate_username, validate_password
+from validators import validate_url, validate_username, validate_password, validate_totp_key
+from totp import generate_totp
 
 
 class VaultController(QObject):
@@ -21,6 +22,7 @@ class VaultController(QObject):
     urlErrorChanged = pyqtSignal()
     usernameErrorChanged = pyqtSignal()
     passwordErrorChanged = pyqtSignal()
+    totpErrorChanged = pyqtSignal()
     recentVaultsChanged = pyqtSignal()
 
     def __init__(self, parent=None):
@@ -33,6 +35,7 @@ class VaultController(QObject):
         self._url_error = ""
         self._username_error = ""
         self._password_error = ""
+        self._totp_error = ""
         self._load_recent_vaults()
 
     def _load_recent_vaults(self):
@@ -62,6 +65,10 @@ class VaultController(QObject):
     @pyqtProperty(str, notify=passwordErrorChanged)
     def passwordError(self):
         return self._password_error
+
+    @pyqtProperty(str, notify=totpErrorChanged)
+    def totpError(self):
+        return self._totp_error
 
     @pyqtSlot(str, result=bool)
     def vaultExists(self, path: str) -> bool:
@@ -122,8 +129,8 @@ class VaultController(QObject):
         entries = self._vault.get_all_passwords()
         self._password_model.load_entries(entries)
 
-    @pyqtSlot(str, str, str, result=bool)
-    def addEntry(self, website: str, username: str, password: str) -> bool:
+    @pyqtSlot(str, str, str, str, result=bool)
+    def addEntry(self, website: str, username: str, password: str, totp_key: str = "") -> bool:
         # Validate
         valid = True
 
@@ -148,11 +155,18 @@ class VaultController(QObject):
             self._password_error = ""
         self.passwordErrorChanged.emit()
 
+        if totp_key and not validate_totp_key(totp_key):
+            self._totp_error = "Invalid TOTP key (must be base32: A-Z, 2-7)"
+            valid = False
+        else:
+            self._totp_error = ""
+        self.totpErrorChanged.emit()
+
         if not valid:
             return False
 
-        entry_id = self._vault.add_password(website, username, password)
-        self._password_model.add_entry(entry_id, website, username, password)
+        entry_id = self._vault.add_password(website, username, password, totp_key)
+        self._password_model.add_entry(entry_id, website, username, password, totp_key)
         return True
 
     @pyqtSlot(int)
@@ -162,8 +176,8 @@ class VaultController(QObject):
             self._vault.delete_password(entry_id)
             self._password_model.remove_entry(row)
 
-    @pyqtSlot(int, str, str, str, result=bool)
-    def updateEntry(self, row: int, website: str, username: str, password: str) -> bool:
+    @pyqtSlot(int, str, str, str, str, result=bool)
+    def updateEntry(self, row: int, website: str, username: str, password: str, totp_key: str = "") -> bool:
         # Validate
         valid = True
 
@@ -188,13 +202,20 @@ class VaultController(QObject):
             self._password_error = ""
         self.passwordErrorChanged.emit()
 
+        if totp_key and not validate_totp_key(totp_key):
+            self._totp_error = "Invalid TOTP key (must be base32: A-Z, 2-7)"
+            valid = False
+        else:
+            self._totp_error = ""
+        self.totpErrorChanged.emit()
+
         if not valid:
             return False
 
         entry_id = self._password_model.getEntryId(row)
         if entry_id >= 0:
-            self._vault.update_password(entry_id, website, username, password)
-            self._password_model.update_entry(row, website, username, password)
+            self._vault.update_password(entry_id, website, username, password, totp_key)
+            self._password_model.update_entry(row, website, username, password, totp_key)
             return True
         return False
 
@@ -210,12 +231,48 @@ class VaultController(QObject):
     def getPassword(self, row: int) -> str:
         return self._password_model.getPassword(row)
 
+    @pyqtSlot(int, result=str)
+    def getTotpKey(self, row: int) -> str:
+        return self._password_model.getTotpKey(row)
+
     @pyqtSlot(int)
     def copyPassword(self, row: int):
         password = self._password_model.getPassword(row)
         if password:
             clipboard = QGuiApplication.clipboard()
             clipboard.setText(password)
+
+    @pyqtSlot(int)
+    def copyUsername(self, row: int):
+        username = self._password_model.getUsername(row)
+        if username:
+            clipboard = QGuiApplication.clipboard()
+            clipboard.setText(username)
+
+    @pyqtSlot(int)
+    def copyTotp(self, row: int):
+        totp_key = self._password_model.getTotpKey(row)
+        if totp_key:
+            code = generate_totp(totp_key)
+            if code:
+                clipboard = QGuiApplication.clipboard()
+                clipboard.setText(code)
+
+    @pyqtSlot(int, result=str)
+    def generateTotp(self, row: int) -> str:
+        totp_key = self._password_model.getTotpKey(row)
+        if totp_key:
+            return generate_totp(totp_key)
+        return ""
+
+    @pyqtSlot(int)
+    def openWebsite(self, row: int):
+        website = self._password_model.getWebsite(row)
+        if website:
+            # Add https:// if no protocol specified
+            if not website.startswith("http://") and not website.startswith("https://"):
+                website = "https://" + website
+            QDesktopServices.openUrl(QUrl(website))
 
     @pyqtSlot(int)
     def togglePasswordVisibility(self, row: int):

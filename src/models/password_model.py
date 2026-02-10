@@ -7,6 +7,8 @@ class PasswordListModel(QAbstractListModel):
     UsernameRole = Qt.ItemDataRole.UserRole + 3
     PasswordRole = Qt.ItemDataRole.UserRole + 4
     VisibleRole = Qt.ItemDataRole.UserRole + 5
+    TotpKeyRole = Qt.ItemDataRole.UserRole + 6
+    HasTotpRole = Qt.ItemDataRole.UserRole + 7
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -31,6 +33,10 @@ class PasswordListModel(QAbstractListModel):
             return entry['password']
         elif role == self.VisibleRole:
             return entry['visible']
+        elif role == self.TotpKeyRole:
+            return entry['totp_key']
+        elif role == self.HasTotpRole:
+            return bool(entry['totp_key'])
 
         return None
 
@@ -41,28 +47,32 @@ class PasswordListModel(QAbstractListModel):
             self.UsernameRole: QByteArray(b'username'),
             self.PasswordRole: QByteArray(b'password'),
             self.VisibleRole: QByteArray(b'visible'),
+            self.TotpKeyRole: QByteArray(b'totpKey'),
+            self.HasTotpRole: QByteArray(b'hasTotp'),
         }
 
     def load_entries(self, entries: list):
         self.beginResetModel()
         self._entries = []
-        for entry_id, website, username, password in entries:
+        for entry_id, website, username, password, totp_key in entries:
             self._entries.append({
                 'id': entry_id,
                 'website': website,
                 'username': username,
                 'password': password,
+                'totp_key': totp_key or '',
                 'visible': False
             })
         self.endResetModel()
 
-    def add_entry(self, entry_id: int, website: str, username: str, password: str):
+    def add_entry(self, entry_id: int, website: str, username: str, password: str, totp_key: str = ""):
         self.beginInsertRows(QModelIndex(), len(self._entries), len(self._entries))
         self._entries.append({
             'id': entry_id,
             'website': website,
             'username': username,
             'password': password,
+            'totp_key': totp_key,
             'visible': False
         })
         self.endInsertRows()
@@ -98,16 +108,23 @@ class PasswordListModel(QAbstractListModel):
             return self._entries[row]['username']
         return ""
 
+    @pyqtSlot(int, result=str)
+    def getTotpKey(self, row: int) -> str:
+        if 0 <= row < len(self._entries):
+            return self._entries[row]['totp_key']
+        return ""
+
     def remove_entry(self, row: int):
         if 0 <= row < len(self._entries):
             self.beginRemoveRows(QModelIndex(), row, row)
             self._entries.pop(row)
             self.endRemoveRows()
 
-    def update_entry(self, row: int, website: str, username: str, password: str):
+    def update_entry(self, row: int, website: str, username: str, password: str, totp_key: str = ""):
         if 0 <= row < len(self._entries):
             self._entries[row]['website'] = website
             self._entries[row]['username'] = username
             self._entries[row]['password'] = password
+            self._entries[row]['totp_key'] = totp_key
             index = self.index(row)
-            self.dataChanged.emit(index, index, [self.WebsiteRole, self.UsernameRole, self.PasswordRole])
+            self.dataChanged.emit(index, index, [self.WebsiteRole, self.UsernameRole, self.PasswordRole, self.TotpKeyRole, self.HasTotpRole])

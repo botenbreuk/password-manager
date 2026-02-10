@@ -58,6 +58,9 @@ class VaultManager:
 
             # Verify password by attempting a query
             self._conn.execute("SELECT count(*) FROM sqlite_master").fetchone()
+
+            # Run migrations for existing vaults
+            self._migrate_database()
             return True
         except Exception:
             self.vault_path = None
@@ -99,16 +102,27 @@ class VaultManager:
                 website TEXT NOT NULL,
                 username TEXT NOT NULL,
                 password TEXT NOT NULL,
+                totp_key TEXT DEFAULT '',
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
         self._conn.commit()
+        self._migrate_database()
 
-    def add_password(self, website: str, username: str, password: str):
+    def _migrate_database(self):
+        """Add totp_key column if it doesn't exist (for existing vaults)."""
+        cursor = self._conn.cursor()
+        cursor.execute("PRAGMA table_info(passwords)")
+        columns = [col[1] for col in cursor.fetchall()]
+        if 'totp_key' not in columns:
+            cursor.execute("ALTER TABLE passwords ADD COLUMN totp_key TEXT DEFAULT ''")
+            self._conn.commit()
+
+    def add_password(self, website: str, username: str, password: str, totp_key: str = ""):
         cursor = self._conn.cursor()
         cursor.execute(
-            "INSERT INTO passwords (website, username, password) VALUES (?, ?, ?)",
-            (website, username, password)
+            "INSERT INTO passwords (website, username, password, totp_key) VALUES (?, ?, ?, ?)",
+            (website, username, password, totp_key)
         )
         self._conn.commit()
         self._save()
@@ -116,7 +130,7 @@ class VaultManager:
 
     def get_all_passwords(self) -> list:
         cursor = self._conn.cursor()
-        cursor.execute("SELECT id, website, username, password FROM passwords")
+        cursor.execute("SELECT id, website, username, password, totp_key FROM passwords")
         return cursor.fetchall()
 
     def delete_password(self, password_id: int):
@@ -125,11 +139,11 @@ class VaultManager:
         self._conn.commit()
         self._save()
 
-    def update_password(self, password_id: int, website: str, username: str, password: str):
+    def update_password(self, password_id: int, website: str, username: str, password: str, totp_key: str = ""):
         cursor = self._conn.cursor()
         cursor.execute(
-            "UPDATE passwords SET website = ?, username = ?, password = ? WHERE id = ?",
-            (website, username, password, password_id)
+            "UPDATE passwords SET website = ?, username = ?, password = ?, totp_key = ? WHERE id = ?",
+            (website, username, password, totp_key, password_id)
         )
         self._conn.commit()
         self._save()
