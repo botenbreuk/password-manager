@@ -86,8 +86,28 @@ class PasswordListModel(QAbstractListModel):
             return self._entries[row]['id']
         return -1
 
+    @pyqtSlot(int, result=str)
+    def getWebsite(self, row: int) -> str:
+        if 0 <= row < len(self._entries):
+            return self._entries[row]['website']
+        return ""
+
+    @pyqtSlot(int, result=str)
+    def getUsername(self, row: int) -> str:
+        if 0 <= row < len(self._entries):
+            return self._entries[row]['username']
+        return ""
+
     def remove_entry(self, row: int):
         if 0 <= row < len(self._entries):
             self.beginRemoveRows(QModelIndex(), row, row)
             self._entries.pop(row)
             self.endRemoveRows()
+
+    def update_entry(self, row: int, website: str, username: str, password: str):
+        if 0 <= row < len(self._entries):
+            self._entries[row]['website'] = website
+            self._entries[row]['username'] = username
+            self._entries[row]['password'] = password
+            index = self.index(row)
+            self.dataChanged.emit(index, index, [self.WebsiteRole, self.UsernameRole, self.PasswordRole])

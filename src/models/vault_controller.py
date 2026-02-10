@@ -124,6 +124,54 @@ class VaultController(QObject):
             self._vault.delete_password(entry_id)
             self._password_model.remove_entry(row)
 
+    @pyqtSlot(int, str, str, str, result=bool)
+    def updateEntry(self, row: int, website: str, username: str, password: str) -> bool:
+        # Validate
+        valid = True
+
+        if not validate_url(website):
+            self._url_error = "Enter a valid URL (e.g., example.com)"
+            valid = False
+        else:
+            self._url_error = ""
+        self.urlErrorChanged.emit()
+
+        if not validate_username(username):
+            self._username_error = "Username cannot be empty"
+            valid = False
+        else:
+            self._username_error = ""
+        self.usernameErrorChanged.emit()
+
+        if not password.strip():
+            self._password_error = "Password cannot be empty"
+            valid = False
+        else:
+            self._password_error = ""
+        self.passwordErrorChanged.emit()
+
+        if not valid:
+            return False
+
+        entry_id = self._password_model.getEntryId(row)
+        if entry_id >= 0:
+            self._vault.update_password(entry_id, website, username, password)
+            self._password_model.update_entry(row, website, username, password)
+            return True
+        return False
+
+    @pyqtSlot(int, result=str)
+    def getWebsite(self, row: int) -> str:
+        return self._password_model.getWebsite(row)
+
+    @pyqtSlot(int, result=str)
+    def getUsername(self, row: int) -> str:
+        return self._password_model.getUsername(row)
+
+    @pyqtSlot(int, result=str)
+    def getPassword(self, row: int) -> str:
+        return self._password_model.getPassword(row)
+
     @pyqtSlot(int)
     def copyPassword(self, row: int):
         password = self._password_model.getPassword(row)

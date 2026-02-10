@@ -124,3 +124,12 @@ class VaultManager:
         cursor.execute("DELETE FROM passwords WHERE id = ?", (password_id,))
         self._conn.commit()
         self._save()
+
+    def update_password(self, password_id: int, website: str, username: str, password: str):
+        cursor = self._conn.cursor()
+        cursor.execute(
+            "UPDATE passwords SET website = ?, username = ?, password = ? WHERE id = ?",
+            (website, username, password, password_id)
+        )
+        self._conn.commit()
+        self._save()

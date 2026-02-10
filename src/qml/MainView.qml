@@ -7,6 +7,10 @@ import QtQuick.Effects
 Item {
     id: mainView
 
+    // Edit mode state
+    property bool editMode: false
+    property int editingRow: -1
+
     // Header bar
     Rectangle {
         id: headerBar
@@ -184,7 +188,7 @@ Item {
                             Layout.preferredWidth: 1
                         }
                         Item {
-                            Layout.preferredWidth: 110
+                            Layout.preferredWidth: 144
                         }
                     }
                 }
@@ -205,7 +209,7 @@ Item {
                         id: delegateItem
                         width: passwordList.width
                         height: 56
-                        color: mouseArea.containsMouse ? "#2f2f2f" : "transparent"
+                        color: editMode && editingRow === index ? "#1976D2" + "30" : (mouseArea.containsMouse ? "#2f2f2f" : "transparent")
 
                         Behavior on color {
                             ColorAnimation { duration: 150 }
@@ -251,13 +255,29 @@ Item {
 
                             Row {
                                 spacing: 4
-                                Layout.preferredWidth: 110
+                                Layout.preferredWidth: 144
                                 opacity: mouseArea.containsMouse ? 1 : 0.6
 
                                 Behavior on opacity {
                                     NumberAnimation { duration: 150 }
                                 }
 
+                                RoundButton {
+                                    width: 34
+                                    height: 34
+                                    flat: true
+                                    ToolTip.visible: hovered
+                                    ToolTip.text: "Edit"
+                                    onClicked: startEdit(index)
+
+                                    Text {
+                                        anchors.centerIn: parent
+                                        text: "\ue3c9"
+                                        font.family: "Material Icons"
+                                        font.pixelSize: 18
+                                        color: "#1976D2"
+                                    }
+                                }
                                 RoundButton {
                                     width: 34
                                     height: 34
@@ -384,14 +404,14 @@ Item {
                     Layout.bottomMargin: 4
 
                     Text {
-                        text: "\ue145"
+                        text: editMode ? "\ue3c9" : "\ue145"
                         font.family: "Material Icons"
                         font.pixelSize: 22
                         color: "#1976D2"
                     }
 
                     Text {
-                        text: "Add New Entry"
+                        text: editMode ? "Edit Entry" : "Add New Entry"
                         font.pixelSize: 16
                         font.weight: Font.DemiBold
                         color: "#ffffff"
@@ -475,7 +495,7 @@ Item {
                         width: parent.width
                         placeholderText: "Enter password"
                         echoMode: TextInput.Password
-                        onAccepted: addEntry()
+                        onAccepted: editMode ? updateEntry() : addEntry()
                     }
 
                     Text {
@@ -491,39 +511,89 @@ Item {
                     Layout.minimumHeight: 10
                 }
 
-                Button {
-                    id: addButton
-                    text: "Add Password"
+                // Action buttons
+                ColumnLayout {
                     Layout.fillWidth: true
-                    Layout.preferredHeight: 44
-                    highlighted: true
-                    font.weight: Font.Medium
-                    onClicked: addEntry()
+                    spacing: 10
 
-                    icon.source: ""
-                    contentItem: Row {
-                        spacing: 8
-                        anchors.centerIn: parent
+                    Button {
+                        id: actionButton
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 44
+                        highlighted: true
+                        font.weight: Font.Medium
+                        onClicked: editMode ? updateEntry() : addEntry()
 
-                        Text {
-                            text: "\ue145"
-                            font.family: "Material Icons"
-                            font.pixelSize: 18
-                            color: "#ffffff"
-                            anchors.verticalCenter: parent.verticalCenter
+                        contentItem: Row {
+                            spacing: 8
+                            anchors.centerIn: parent
+
+                            Text {
+                                text: editMode ? "\ue161" : "\ue145"
+                                font.family: "Material Icons"
+                                font.pixelSize: 18
+                                color: "#ffffff"
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+
+                            Text {
+                                text: editMode ? "Save Changes" : "Add Password"
+                                font.pixelSize: 14
+                                font.weight: Font.Medium
+                                color: "#ffffff"
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
                         }
+                    }
 
-                        Text {
-                            text: "Add Password"
-                            font.pixelSize: 14
-                            font.weight: Font.Medium
-                            color: "#ffffff"
-                            anchors.verticalCenter: parent.verticalCenter
+                    Button {
+                        id: cancelButton
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 40
+                        flat: true
+                        visible: editMode
+                        onClicked: cancelEdit()
+
+                        contentItem: Row {
+                            spacing: 8
+                            anchors.centerIn: parent
+
+                            Text {
+                                text: "\ue5cd"
+                                font.family: "Material Icons"
+                                font.pixelSize: 18
+                                color: "#909090"
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+
+                            Text {
+                                text: "Cancel"
+                                font.pixelSize: 14
+                                color: "#909090"
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
                         }
                     }
                 }
             }
         }
+    }
+
+    function startEdit(row) {
+        editMode = true
+        editingRow = row
+        websiteField.text = vaultController.getWebsite(row)
+        usernameField.text = vaultController.getUsername(row)
+        passwordField.text = vaultController.getPassword(row)
+        websiteField.focus = true
+    }
+
+    function cancelEdit() {
+        editMode = false
+        editingRow = -1
+        websiteField.text = ""
+        usernameField.text = ""
+        passwordField.text = ""
     }
 
     function addEntry() {
@@ -532,6 +602,12 @@ Item {
             usernameField.text = ""
             passwordField.text = ""
             websiteField.focus = true
+        }
+    }
+
+    function updateEntry() {
+        if (vaultController && vaultController.updateEntry(editingRow, websiteField.text, usernameField.text, passwordField.text)) {
+            cancelEdit()
         }
     }
 }
