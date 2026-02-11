@@ -1,7 +1,7 @@
 from PyQt6.QtWidgets import QMainWindow, QWidget, QHBoxLayout, QMessageBox
 
-from widgets import PasswordTable, EntryForm
-from vault import VaultManager
+from password_manager.ui.widgets import PasswordTable, EntryForm
+from password_manager.core.vault import VaultManager
 
 
 class MainWindow(QMainWindow):

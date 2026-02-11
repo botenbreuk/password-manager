@@ -4,7 +4,8 @@ from pathlib import Path
 from PyQt6.QtGui import QGuiApplication, QFontDatabase
 from PyQt6.QtQml import QQmlApplicationEngine
 
-from models import VaultController
+from password_manager.controllers.vault_controller import VaultController
+from password_manager.controllers.password_controller import PasswordController
 
 
 def main():
@@ -12,14 +13,16 @@ def main():
     app.setApplicationName("Password Manager")
 
     # Load Material Icons font
-    font_path = Path(__file__).parent / "resources" / "MaterialIcons-Regular.ttf"
+    font_path = Path(__file__).parent / "resources" / "fonts" / "MaterialIcons-Regular.ttf"
     QFontDatabase.addApplicationFont(str(font_path))
 
-    # Create vault controller with app as parent to control lifetime
-    vault_controller = VaultController(app)
+    # Create controllers with app as parent to control lifetime
+    password_controller = PasswordController(app)
+    vault_controller = VaultController(password_controller, app)
 
     engine = QQmlApplicationEngine()
     engine.rootContext().setContextProperty("vaultController", vault_controller)
+    engine.rootContext().setContextProperty("passwordController", password_controller)
 
     # Load main QML file
     qml_file = Path(__file__).parent / "qml" / "Main.qml"

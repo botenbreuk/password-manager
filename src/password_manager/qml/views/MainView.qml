@@ -225,7 +225,7 @@ Item {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     clip: true
-                    model: vaultController ? vaultController.passwordModel : null
+                    model: passwordController ? passwordController.passwordModel : null
 
                     ScrollBar.vertical: ScrollBar {
                         policy: ScrollBar.AsNeeded
@@ -268,7 +268,7 @@ Item {
                                     anchors.fill: parent
                                     hoverEnabled: true
                                     cursorShape: Qt.PointingHandCursor
-                                    onClicked: vaultController.openWebsite(index)
+                                    onClicked: passwordController.openWebsite(index)
                                 }
                             }
 
@@ -294,7 +294,7 @@ Item {
                                     anchors.fill: parent
                                     hoverEnabled: true
                                     cursorShape: Qt.PointingHandCursor
-                                    onClicked: vaultController.copyUsername(index)
+                                    onClicked: passwordController.copyUsername(index)
                                 }
 
                                 ToolTip {
@@ -336,7 +336,7 @@ Item {
                                     anchors.fill: parent
                                     hoverEnabled: true
                                     cursorShape: Qt.PointingHandCursor
-                                    onClicked: vaultController.copyPassword(index)
+                                    onClicked: passwordController.copyPassword(index)
                                 }
 
                                 ToolTip {
@@ -375,7 +375,7 @@ Item {
                                         text: {
                                             // Reference totpRefreshTrigger to force refresh
                                             var trigger = totpRefreshTrigger
-                                            return model.hasTotp ? vaultController.generateTotp(index) : ""
+                                            return model.hasTotp ? passwordController.generateTotp(index) : ""
                                         }
                                         font.pixelSize: 14
                                         font.weight: Font.Medium
@@ -426,7 +426,7 @@ Item {
                                     anchors.fill: parent
                                     hoverEnabled: true
                                     cursorShape: Qt.PointingHandCursor
-                                    onClicked: vaultController.copyTotp(index)
+                                    onClicked: passwordController.copyTotp(index)
                                 }
 
                                 ToolTip {
@@ -483,7 +483,7 @@ Item {
                                     flat: true
                                     ToolTip.visible: hovered
                                     ToolTip.text: model.visible ? "Hide password" : "Show password"
-                                    onClicked: vaultController.togglePasswordVisibility(index)
+                                    onClicked: passwordController.togglePasswordVisibility(index)
 
                                     Text {
                                         anchors.centerIn: parent
@@ -499,7 +499,7 @@ Item {
                                     flat: true
                                     ToolTip.visible: hovered
                                     ToolTip.text: "Delete"
-                                    onClicked: vaultController.deleteEntry(index)
+                                    onClicked: passwordController.deleteEntry(index)
 
                                     Text {
                                         anchors.centerIn: parent
@@ -627,10 +627,10 @@ Item {
                     }
 
                     Text {
-                        text: vaultController ? vaultController.urlError : ""
+                        text: passwordController ? passwordController.urlError : ""
                         color: "#ef5350"
                         font.pixelSize: 11
-                        visible: vaultController && vaultController.urlError !== ""
+                        visible: passwordController && passwordController.urlError !== ""
                     }
                 }
 
@@ -654,10 +654,10 @@ Item {
                     }
 
                     Text {
-                        text: vaultController ? vaultController.usernameError : ""
+                        text: passwordController ? passwordController.usernameError : ""
                         color: "#ef5350"
                         font.pixelSize: 11
-                        visible: vaultController && vaultController.usernameError !== ""
+                        visible: passwordController && passwordController.usernameError !== ""
                     }
                 }
 
@@ -682,10 +682,10 @@ Item {
                     }
 
                     Text {
-                        text: vaultController ? vaultController.passwordError : ""
+                        text: passwordController ? passwordController.passwordError : ""
                         color: "#ef5350"
                         font.pixelSize: 11
-                        visible: vaultController && vaultController.passwordError !== ""
+                        visible: passwordController && passwordController.passwordError !== ""
                     }
                 }
 
@@ -709,17 +709,17 @@ Item {
                     }
 
                     Text {
-                        text: vaultController ? vaultController.totpError : ""
+                        text: passwordController ? passwordController.totpError : ""
                         color: "#ef5350"
                         font.pixelSize: 11
-                        visible: vaultController && vaultController.totpError !== ""
+                        visible: passwordController && passwordController.totpError !== ""
                     }
 
                     Text {
                         text: "Base32 secret for 2FA codes"
                         font.pixelSize: 10
                         color: "#606060"
-                        visible: !vaultController || vaultController.totpError === ""
+                        visible: !passwordController || passwordController.totpError === ""
                     }
                 }
 
@@ -799,10 +799,10 @@ Item {
     function startEdit(row) {
         editMode = true
         editingRow = row
-        websiteField.text = vaultController.getWebsite(row)
-        usernameField.text = vaultController.getUsername(row)
-        passwordField.text = vaultController.getPassword(row)
-        totpField.text = vaultController.getTotpKey(row)
+        websiteField.text = passwordController.getWebsite(row)
+        usernameField.text = passwordController.getUsername(row)
+        passwordField.text = passwordController.getPassword(row)
+        totpField.text = passwordController.getTotpKey(row)
         websiteField.focus = true
     }
 
@@ -816,7 +816,7 @@ Item {
     }
 
     function addEntry() {
-        if (vaultController && vaultController.addEntry(websiteField.text, usernameField.text, passwordField.text, totpField.text)) {
+        if (passwordController && passwordController.addEntry(websiteField.text, usernameField.text, passwordField.text, totpField.text)) {
             websiteField.text = ""
             usernameField.text = ""
             passwordField.text = ""
@@ -826,7 +826,7 @@ Item {
     }
 
     function updateEntry() {
-        if (vaultController && vaultController.updateEntry(editingRow, websiteField.text, usernameField.text, passwordField.text, totpField.text)) {
+        if (passwordController && passwordController.updateEntry(editingRow, websiteField.text, usernameField.text, passwordField.text, totpField.text)) {
             cancelEdit()
         }
     }

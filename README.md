@@ -30,8 +30,23 @@ pip install -r requirements.txt
 
 ## Running the Project
 
+### Option 1: Install in development mode (recommended)
+
 ```bash
-python src/main.py
+pip install -e .
+password-manager
+```
+
+### Option 2: Run directly
+
+```bash
+python run.py
+```
+
+### Option 3: Run as module
+
+```bash
+PYTHONPATH=src python -m password_manager
 ```
 
 ## Unit Tests
@@ -58,7 +73,7 @@ Run tests with coverage (requires `pytest-cov`):
 
 ```bash
 pip install pytest-cov
-pytest --cov=src
+pytest --cov=password_manager
 ```
 
 ## Managing Dependencies

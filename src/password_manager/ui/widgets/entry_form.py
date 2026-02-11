@@ -7,8 +7,8 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import pyqtSignal
 
-from styles import VALID_STYLE, INVALID_STYLE, ERROR_LABEL_STYLE
-from validators import validate_url, validate_username
+from password_manager.config.styles import VALID_STYLE, INVALID_STYLE, ERROR_LABEL_STYLE
+from password_manager.core.validators import validate_url, validate_username
 
 class EntryForm(QWidget):
     entry_added = pyqtSignal(str, str, str)

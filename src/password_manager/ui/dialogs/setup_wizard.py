@@ -11,8 +11,8 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import Qt
 
-from styles import INVALID_STYLE, VALID_STYLE, ERROR_LABEL_STYLE
-from validators import validate_password
+from password_manager.config.styles import INVALID_STYLE, VALID_STYLE, ERROR_LABEL_STYLE
+from password_manager.core.validators import validate_password
 
 
 class SetupWizard(QDialog):

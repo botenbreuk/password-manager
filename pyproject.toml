@@ -1,12 +1,28 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "password-manager"
 version = "0.1.0"
-description = ""
+description = "A secure password manager with Qt Quick UI"
 requires-python = ">=3.9"
-dependencies = []
+dependencies = [
+    "PyQt6>=6.10.0",
+    "sqlcipher3>=0.6.0",
+]
 
 [project.optional-dependencies]
 dev = ["pytest>=7.0.0"]
+
+[project.scripts]
+password-manager = "password_manager.app:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+password_manager = ["qml/*.qml", "qml/**/*.qml", "resources/**/*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
