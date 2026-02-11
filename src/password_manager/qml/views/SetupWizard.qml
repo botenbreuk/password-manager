@@ -287,8 +287,14 @@ Dialog {
         currentFile: "file:///" + (nameField.text ? nameField.text.toLowerCase().replace(/ /g, "-") : "vault") + ".vault"
         onAccepted: {
             var path = selectedFile.toString()
-            if (path.startsWith("file://")) {
-                path = path.substring(7)
+            // Handle file:// URL - on Windows it's file:///C:/ so check for drive letter
+            if (path.startsWith("file:///")) {
+                path = path.substring(8)
+                // On Unix, paths start with /, so we need file:///path -> /path
+                // On Windows, paths start with drive letter, so file:///C:/path -> C:/path
+                if (path.length > 1 && path.charAt(1) !== ':') {
+                    path = "/" + path
+                }
             }
             locationField.text = path
         }
