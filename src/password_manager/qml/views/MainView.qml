@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import QtQuick.Dialogs
 import QtQuick.Controls.Material
 import QtQuick.Effects
 
@@ -280,7 +281,7 @@ Item {
                     icon: "\ue2c4"
                     label: "Export Data"
                     expanded: sidebarExpanded
-                    enabled: false
+                    onClicked: exportDialog.open()
                 }
 
                 // Separator
@@ -1276,7 +1277,7 @@ Item {
         id: generatorPopup
         title: ""
         modal: true
-        width: 420
+        width: 462
         height: 440
         anchors.centerIn: parent
         padding: 0
@@ -1321,7 +1322,7 @@ Item {
             RowLayout {
                 anchors.fill: parent
                 anchors.leftMargin: 24
-                anchors.rightMargin: 24
+                anchors.rightMargin: 16
 
                 Text {
                     text: "\ue73c"
@@ -1597,7 +1598,7 @@ Item {
             RowLayout {
                 anchors.fill: parent
                 anchors.leftMargin: 24
-                anchors.rightMargin: 24
+                anchors.rightMargin: 16
 
                 Text {
                     text: "\ue312"
@@ -1739,7 +1740,7 @@ Item {
             RowLayout {
                 anchors.fill: parent
                 anchors.leftMargin: 24
-                anchors.rightMargin: 24
+                anchors.rightMargin: 16
 
                 Text {
                     text: "\ue88e"
@@ -1819,6 +1820,347 @@ Item {
             }
 
             Item { Layout.fillHeight: true }
+        }
+    }
+
+    // Export Dialog
+    Dialog {
+        id: exportDialog
+        title: ""
+        modal: true
+        width: 462
+        height: 340
+        anchors.centerIn: parent
+        padding: 0
+        topPadding: 0
+        dim: true
+
+        Material.theme: Material.Dark
+        Material.accent: "#1976D2"
+
+        property string selectedFormat: "csv"
+        property bool exportSuccess: false
+        property string locationError: ""
+
+        Overlay.modal: Rectangle {
+            color: "#D0000000"
+        }
+
+        background: Rectangle {
+            color: "#E8141414"
+            radius: 16
+            border.color: "#404040"
+            border.width: 1
+
+            layer.enabled: true
+            layer.effect: MultiEffect {
+                shadowEnabled: true
+                shadowColor: "#80000000"
+                shadowBlur: 1.5
+                shadowVerticalOffset: 8
+            }
+        }
+
+        header: Rectangle {
+            height: 60
+            color: "#252525"
+            radius: 16
+
+            Rectangle {
+                anchors.bottom: parent.bottom
+                anchors.left: parent.left
+                anchors.right: parent.right
+                height: 20
+                color: "#252525"
+            }
+
+            RowLayout {
+                anchors.fill: parent
+                anchors.leftMargin: 24
+                anchors.rightMargin: 16
+
+                Text {
+                    text: exportDialog.exportSuccess ? "\ue86c" : "\ue2c4"
+                    font.family: "Material Icons"
+                    font.pixelSize: 28
+                    color: exportDialog.exportSuccess ? "#4CAF50" : "#1976D2"
+                }
+
+                Text {
+                    text: exportDialog.exportSuccess ? "Export Successful" : "Export Data"
+                    font.pixelSize: 20
+                    font.weight: Font.DemiBold
+                    color: "#ffffff"
+                }
+
+                Item { Layout.fillWidth: true }
+
+                RoundButton {
+                    width: 36
+                    height: 36
+                    flat: true
+                    onClicked: exportDialog.close()
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: "\ue5cd"
+                        font.family: "Material Icons"
+                        font.pixelSize: 20
+                        color: "#808080"
+                    }
+                }
+            }
+        }
+
+        footer: Item { height: 0 }
+
+        // Success view
+        ColumnLayout {
+            anchors.fill: parent
+            anchors.margins: 20
+            spacing: 16
+            visible: exportDialog.exportSuccess
+
+            Item { Layout.fillHeight: true }
+
+            ColumnLayout {
+                Layout.alignment: Qt.AlignHCenter
+                spacing: 16
+
+                Text {
+                    text: "\ue86c"
+                    font.family: "Material Icons"
+                    font.pixelSize: 56
+                    color: "#4CAF50"
+                    Layout.alignment: Qt.AlignHCenter
+                }
+
+                Text {
+                    text: "Your passwords have been exported successfully!"
+                    font.pixelSize: 14
+                    color: "#c0c0c0"
+                    Layout.alignment: Qt.AlignHCenter
+                }
+
+                Text {
+                    text: exportLocationField.text
+                    font.pixelSize: 12
+                    color: "#808080"
+                    Layout.alignment: Qt.AlignHCenter
+                    elide: Text.ElideMiddle
+                    Layout.maximumWidth: 400
+                }
+            }
+
+            Item { Layout.fillHeight: true }
+
+            Button {
+                text: "Done"
+                Layout.fillWidth: true
+                Layout.preferredHeight: 44
+                highlighted: true
+                font.weight: Font.Medium
+                font.pixelSize: 14
+                onClicked: exportDialog.close()
+            }
+        }
+
+        // Export form view
+        ColumnLayout {
+            anchors.fill: parent
+            anchors.margins: 20
+            spacing: 12
+            visible: !exportDialog.exportSuccess
+
+            // Format selection
+            Column {
+                Layout.fillWidth: true
+                spacing: 6
+
+                Row {
+                    spacing: 8
+
+                    Text {
+                        text: "\ue873"
+                        font.family: "Material Icons"
+                        font.pixelSize: 16
+                        color: "#1976D2"
+                    }
+
+                    Text {
+                        text: "Export Format"
+                        font.pixelSize: 13
+                        font.weight: Font.Medium
+                        color: "#ffffff"
+                    }
+                }
+
+                Row {
+                    width: parent.width
+                    spacing: 0
+
+                    Rectangle {
+                        width: parent.width / 2
+                        height: 40
+                        topLeftRadius: 8
+                        bottomLeftRadius: 8
+                        topRightRadius: 0
+                        bottomRightRadius: 0
+                        color: exportDialog.selectedFormat === "csv" ? "#1976D2" : (csvMouseArea.containsMouse ? "#353535" : "#2a2a2a")
+                        border.color: exportDialog.selectedFormat === "csv" ? "#1976D2" : "#404040"
+                        border.width: 1
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: "CSV"
+                            font.pixelSize: 14
+                            font.weight: exportDialog.selectedFormat === "csv" ? Font.Medium : Font.Normal
+                            color: exportDialog.selectedFormat === "csv" ? "#ffffff" : "#a0a0a0"
+                        }
+
+                        MouseArea {
+                            id: csvMouseArea
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: exportDialog.selectedFormat = "csv"
+                        }
+                    }
+
+                    Rectangle {
+                        width: parent.width / 2
+                        height: 40
+                        topLeftRadius: 0
+                        bottomLeftRadius: 0
+                        topRightRadius: 8
+                        bottomRightRadius: 8
+                        color: exportDialog.selectedFormat === "json" ? "#1976D2" : (jsonMouseArea.containsMouse ? "#353535" : "#2a2a2a")
+                        border.color: exportDialog.selectedFormat === "json" ? "#1976D2" : "#404040"
+                        border.width: 1
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: "JSON"
+                            font.pixelSize: 14
+                            font.weight: exportDialog.selectedFormat === "json" ? Font.Medium : Font.Normal
+                            color: exportDialog.selectedFormat === "json" ? "#ffffff" : "#a0a0a0"
+                        }
+
+                        MouseArea {
+                            id: jsonMouseArea
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: exportDialog.selectedFormat = "json"
+                        }
+                    }
+                }
+            }
+
+            // Save location
+            Column {
+                Layout.fillWidth: true
+                spacing: 6
+
+                Row {
+                    spacing: 8
+
+                    Text {
+                        text: "\ue2c8"
+                        font.family: "Material Icons"
+                        font.pixelSize: 16
+                        color: "#1976D2"
+                    }
+
+                    Text {
+                        text: "Save Location"
+                        font.pixelSize: 13
+                        font.weight: Font.Medium
+                        color: "#ffffff"
+                    }
+                }
+
+                Row {
+                    width: parent.width
+                    spacing: 10
+
+                    TextField {
+                        id: exportLocationField
+                        width: parent.width - exportBrowseButton.width - 10
+                        placeholderText: "Choose where to save..."
+                        readOnly: true
+                    }
+
+                    Button {
+                        id: exportBrowseButton
+                        text: "Browse"
+                        flat: true
+                        onClicked: exportFileDialog.open()
+                    }
+                }
+
+                Text {
+                    text: exportDialog.locationError
+                    color: "#ef5350"
+                    font.pixelSize: 11
+                    visible: exportDialog.locationError !== ""
+                }
+            }
+
+            Item { Layout.fillHeight: true }
+
+            Button {
+                text: "Export"
+                Layout.fillWidth: true
+                Layout.preferredHeight: 44
+                highlighted: true
+                font.weight: Font.Medium
+                font.pixelSize: 14
+                onClicked: {
+                    if (exportLocationField.text.trim() === "") {
+                        exportDialog.locationError = "Please choose a location"
+                        return
+                    }
+                    exportDialog.locationError = ""
+
+                    var success = false
+                    if (exportDialog.selectedFormat === "csv") {
+                        success = passwordController.exportToCsv(exportLocationField.text)
+                    } else {
+                        success = passwordController.exportToJson(exportLocationField.text)
+                    }
+
+                    if (success) {
+                        exportDialog.exportSuccess = true
+                    }
+                }
+            }
+        }
+
+        onClosed: {
+            exportSuccess = false
+            locationError = ""
+            exportLocationField.text = ""
+        }
+    }
+
+    FileDialog {
+        id: exportFileDialog
+        title: "Export Passwords"
+        fileMode: FileDialog.SaveFile
+        nameFilters: exportDialog.selectedFormat === "csv"
+            ? ["CSV Files (*.csv)"]
+            : ["JSON Files (*.json)"]
+        currentFile: "file:///" + (vaultController && vaultController.vaultName ? vaultController.vaultName.toLowerCase().replace(/ /g, "-") : "passwords") + (exportDialog.selectedFormat === "csv" ? ".csv" : ".json")
+        onAccepted: {
+            var path = selectedFile.toString()
+            if (path.startsWith("file:///")) {
+                path = path.substring(8)
+                if (path.length > 1 && path.charAt(1) !== ':') {
+                    path = "/" + path
+                }
+            }
+            exportLocationField.text = path
         }
     }
 

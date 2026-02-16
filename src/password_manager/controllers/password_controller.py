@@ -1,3 +1,5 @@
+import csv
+import json
 from PyQt6.QtCore import QObject, pyqtSignal, pyqtSlot, pyqtProperty, QUrl
 from PyQt6.QtGui import QGuiApplication, QDesktopServices
 
@@ -191,3 +193,52 @@ class PasswordController(QObject):
     @pyqtSlot(int)
     def togglePasswordVisibility(self, row: int):
         self._password_model.toggleVisibility(row)
+
+    @pyqtSlot(str, result=bool)
+    def exportToCsv(self, file_path: str) -> bool:
+        """Export all passwords to a CSV file."""
+        if not self._vault:
+            return False
+
+        try:
+            # Returns tuples: (id, website, username, password, totp_key)
+            entries = self._vault.get_all_passwords()
+            with open(file_path, 'w', newline='', encoding='utf-8') as f:
+                writer = csv.writer(f)
+                writer.writerow(['website', 'username', 'password', 'totp_key'])
+                for entry in entries:
+                    writer.writerow([
+                        entry[1],  # website
+                        entry[2],  # username
+                        entry[3],  # password
+                        entry[4]   # totp_key
+                    ])
+            return True
+        except Exception as e:
+            print(f"Export CSV error: {e}")
+            return False
+
+    @pyqtSlot(str, result=bool)
+    def exportToJson(self, file_path: str) -> bool:
+        """Export all passwords to a JSON file."""
+        if not self._vault:
+            return False
+
+        try:
+            # Returns tuples: (id, website, username, password, totp_key)
+            entries = self._vault.get_all_passwords()
+            export_data = []
+            for entry in entries:
+                export_data.append({
+                    'website': entry[1],
+                    'username': entry[2],
+                    'password': entry[3],
+                    'totp_key': entry[4]
+                })
+
+            with open(file_path, 'w', encoding='utf-8') as f:
+                json.dump(export_data, f, indent=2, ensure_ascii=False)
+            return True
+        except Exception as e:
+            print(f"Export JSON error: {e}")
+            return False
