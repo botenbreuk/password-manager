@@ -7,10 +7,10 @@ import "views"
 ApplicationWindow {
     id: root
     visible: true
-    width: 1100
+    width: 1300
     height: 750
-    minimumWidth: 800
-    minimumHeight: 600
+    minimumWidth: 900
+    minimumHeight: 650
     title: "Password Manager" + (vaultController && vaultController.vaultName ? " - " + vaultController.vaultName : "")
 
     Material.theme: Material.Dark

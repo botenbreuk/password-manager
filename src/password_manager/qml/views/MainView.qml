@@ -16,6 +16,7 @@ Item {
     // Sidebar state
     property bool sidebarExpanded: true
     property string searchQuery: ""
+    property bool showFavoritesOnly: false
 
     // Click outside to unfocus search
     MouseArea {
@@ -234,17 +235,18 @@ Item {
                     icon: "\ue899"
                     label: "All Passwords"
                     expanded: sidebarExpanded
-                    selected: true
+                    selected: !showFavoritesOnly
                     badgeCount: passwordList.count
+                    onClicked: showFavoritesOnly = false
                 }
 
                 SidebarItem {
                     icon: "\ue838"
                     label: "Favorites"
                     expanded: sidebarExpanded
-                    enabled: false
-                    ToolTip.visible: hovered && !sidebarExpanded
-                    ToolTip.text: "Favorites (coming soon)"
+                    selected: showFavoritesOnly
+                    badgeCount: passwordController ? passwordController.passwordModel.favoriteCount : 0
+                    onClicked: showFavoritesOnly = true
                 }
 
                 // Separator
@@ -300,14 +302,6 @@ Item {
                     icon: "\ue8b8"
                     label: "Settings"
                     expanded: sidebarExpanded
-
-                    SidebarItem {
-                        icon: "\ue32a"
-                        label: "Appearance"
-                        expanded: sidebarExpanded
-                        indent: true
-                        enabled: false
-                    }
 
                     SidebarItem {
                         icon: "\ue897"
@@ -378,7 +372,7 @@ Item {
                         spacing: 10
 
                         Text {
-                            text: searchQuery !== "" ? "Search Results" : "Saved Passwords"
+                            text: searchQuery !== "" ? "Search Results" : (showFavoritesOnly ? "Favorites" : "Saved Passwords")
                             font.pixelSize: 15
                             font.weight: Font.DemiBold
                             color: "#ffffff"
@@ -463,7 +457,7 @@ Item {
                             Layout.preferredWidth: 115
                         }
                         Item {
-                            Layout.preferredWidth: 100
+                            Layout.preferredWidth: 132
                         }
                     }
                 }
@@ -489,6 +483,9 @@ Item {
                         color: editMode && editingRow === index ? "#1976D2" + "30" : (mouseArea.containsMouse ? "#2f2f2f" : "transparent")
 
                         property bool matchesSearch: {
+                            // Filter by favorites if enabled
+                            if (showFavoritesOnly && !model.favorite) return false
+                            // Filter by search query
                             if (searchQuery === "") return true
                             var query = searchQuery.toLowerCase()
                             return model.website.toLowerCase().indexOf(query) !== -1 ||
@@ -716,13 +713,29 @@ Item {
 
                             Row {
                                 spacing: 2
-                                Layout.preferredWidth: 100
+                                Layout.preferredWidth: 132
                                 opacity: mouseArea.containsMouse ? 1 : 0.6
 
                                 Behavior on opacity {
                                     NumberAnimation { duration: 150 }
                                 }
 
+                                RoundButton {
+                                    width: 32
+                                    height: 32
+                                    flat: true
+                                    ToolTip.visible: hovered
+                                    ToolTip.text: model.favorite ? "Remove from favorites" : "Add to favorites"
+                                    onClicked: passwordController.toggleFavorite(index)
+
+                                    Text {
+                                        anchors.centerIn: parent
+                                        text: model.favorite ? "\ue838" : "\ue83a"
+                                        font.family: "Material Icons"
+                                        font.pixelSize: 16
+                                        color: model.favorite ? "#FFC107" : "#e0e0e0"
+                                    }
+                                }
                                 RoundButton {
                                     width: 32
                                     height: 32

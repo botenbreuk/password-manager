@@ -1,4 +1,4 @@
-from PyQt6.QtCore import QAbstractListModel, Qt, QModelIndex, pyqtSlot, QByteArray
+from PyQt6.QtCore import QAbstractListModel, Qt, QModelIndex, pyqtSlot, pyqtSignal, pyqtProperty, QByteArray
 
 
 class PasswordListModel(QAbstractListModel):
@@ -9,6 +9,9 @@ class PasswordListModel(QAbstractListModel):
     VisibleRole = Qt.ItemDataRole.UserRole + 5
     TotpKeyRole = Qt.ItemDataRole.UserRole + 6
     HasTotpRole = Qt.ItemDataRole.UserRole + 7
+    FavoriteRole = Qt.ItemDataRole.UserRole + 8
+
+    favoriteCountChanged = pyqtSignal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -37,6 +40,8 @@ class PasswordListModel(QAbstractListModel):
             return entry['totp_key']
         elif role == self.HasTotpRole:
             return bool(entry['totp_key'])
+        elif role == self.FavoriteRole:
+            return entry['favorite']
 
         return None
 
@@ -49,23 +54,26 @@ class PasswordListModel(QAbstractListModel):
             self.VisibleRole: QByteArray(b'visible'),
             self.TotpKeyRole: QByteArray(b'totpKey'),
             self.HasTotpRole: QByteArray(b'hasTotp'),
+            self.FavoriteRole: QByteArray(b'favorite'),
         }
 
     def load_entries(self, entries: list):
         self.beginResetModel()
         self._entries = []
-        for entry_id, website, username, password, totp_key in entries:
+        for entry_id, website, username, password, totp_key, favorite in entries:
             self._entries.append({
                 'id': entry_id,
                 'website': website,
                 'username': username,
                 'password': password,
                 'totp_key': totp_key or '',
+                'favorite': bool(favorite),
                 'visible': False
             })
         self.endResetModel()
+        self.favoriteCountChanged.emit()
 
-    def add_entry(self, entry_id: int, website: str, username: str, password: str, totp_key: str = ""):
+    def add_entry(self, entry_id: int, website: str, username: str, password: str, totp_key: str = "", favorite: bool = False):
         self.beginInsertRows(QModelIndex(), len(self._entries), len(self._entries))
         self._entries.append({
             'id': entry_id,
@@ -73,6 +81,7 @@ class PasswordListModel(QAbstractListModel):
             'username': username,
             'password': password,
             'totp_key': totp_key,
+            'favorite': favorite,
             'visible': False
         })
         self.endInsertRows()
@@ -83,6 +92,25 @@ class PasswordListModel(QAbstractListModel):
             self._entries[row]['visible'] = not self._entries[row]['visible']
             index = self.index(row)
             self.dataChanged.emit(index, index, [self.VisibleRole])
+
+    def toggleFavorite(self, row: int):
+        if 0 <= row < len(self._entries):
+            self._entries[row]['favorite'] = not self._entries[row]['favorite']
+            index = self.index(row)
+            self.dataChanged.emit(index, index, [self.FavoriteRole])
+            self.favoriteCountChanged.emit()
+            return self._entries[row]['favorite']
+        return False
+
+    @pyqtSlot(int, result=bool)
+    def isFavorite(self, row: int) -> bool:
+        if 0 <= row < len(self._entries):
+            return self._entries[row]['favorite']
+        return False
+
+    @pyqtProperty(int, notify=favoriteCountChanged)
+    def favoriteCount(self) -> int:
+        return sum(1 for entry in self._entries if entry.get('favorite', False))
 
     @pyqtSlot(int, result=str)
     def getPassword(self, row: int) -> str:
@@ -116,9 +144,12 @@ class PasswordListModel(QAbstractListModel):
 
     def remove_entry(self, row: int):
         if 0 <= row < len(self._entries):
+            was_favorite = self._entries[row].get('favorite', False)
             self.beginRemoveRows(QModelIndex(), row, row)
             self._entries.pop(row)
             self.endRemoveRows()
+            if was_favorite:
+                self.favoriteCountChanged.emit()
 
     def update_entry(self, row: int, website: str, username: str, password: str, totp_key: str = ""):
         if 0 <= row < len(self._entries):

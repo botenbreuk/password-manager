@@ -194,6 +194,15 @@ class PasswordController(QObject):
     def togglePasswordVisibility(self, row: int):
         self._password_model.toggleVisibility(row)
 
+    @pyqtSlot(int)
+    def toggleFavorite(self, row: int):
+        if not self._vault:
+            return
+        entry_id = self._password_model.getEntryId(row)
+        if entry_id >= 0:
+            self._vault.toggle_favorite(entry_id)
+            self._password_model.toggleFavorite(row)
+
     @pyqtSlot(str, result=bool)
     def exportToCsv(self, file_path: str) -> bool:
         """Export all passwords to a CSV file."""
@@ -201,17 +210,18 @@ class PasswordController(QObject):
             return False
 
         try:
-            # Returns tuples: (id, website, username, password, totp_key)
+            # Returns tuples: (id, website, username, password, totp_key, favorite)
             entries = self._vault.get_all_passwords()
             with open(file_path, 'w', newline='', encoding='utf-8') as f:
                 writer = csv.writer(f)
-                writer.writerow(['website', 'username', 'password', 'totp_key'])
+                writer.writerow(['website', 'username', 'password', 'totp_key', 'favorite'])
                 for entry in entries:
                     writer.writerow([
                         entry[1],  # website
                         entry[2],  # username
                         entry[3],  # password
-                        entry[4]   # totp_key
+                        entry[4],  # totp_key
+                        entry[5]   # favorite
                     ])
             return True
         except Exception as e:
@@ -225,7 +235,7 @@ class PasswordController(QObject):
             return False
 
         try:
-            # Returns tuples: (id, website, username, password, totp_key)
+            # Returns tuples: (id, website, username, password, totp_key, favorite)
             entries = self._vault.get_all_passwords()
             export_data = []
             for entry in entries:
@@ -233,7 +243,8 @@ class PasswordController(QObject):
                     'website': entry[1],
                     'username': entry[2],
                     'password': entry[3],
-                    'totp_key': entry[4]
+                    'totp_key': entry[4],
+                    'favorite': bool(entry[5])
                 })
 
             with open(file_path, 'w', encoding='utf-8') as f:

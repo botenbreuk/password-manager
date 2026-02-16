@@ -108,6 +108,7 @@ class VaultManager:
                 username TEXT NOT NULL,
                 password TEXT NOT NULL,
                 totp_key TEXT DEFAULT '',
+                favorite INTEGER DEFAULT 0,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
@@ -115,13 +116,15 @@ class VaultManager:
         self._migrate_database()
 
     def _migrate_database(self):
-        """Add totp_key column if it doesn't exist (for existing vaults)."""
+        """Add missing columns for existing vaults."""
         cursor = self._conn.cursor()
         cursor.execute("PRAGMA table_info(passwords)")
         columns = [col[1] for col in cursor.fetchall()]
         if 'totp_key' not in columns:
             cursor.execute("ALTER TABLE passwords ADD COLUMN totp_key TEXT DEFAULT ''")
-            self._conn.commit()
+        if 'favorite' not in columns:
+            cursor.execute("ALTER TABLE passwords ADD COLUMN favorite INTEGER DEFAULT 0")
+        self._conn.commit()
 
     def add_password(self, website: str, username: str, password: str, totp_key: str = ""):
         cursor = self._conn.cursor()
@@ -135,8 +138,21 @@ class VaultManager:
 
     def get_all_passwords(self) -> list:
         cursor = self._conn.cursor()
-        cursor.execute("SELECT id, website, username, password, totp_key FROM passwords")
+        cursor.execute("SELECT id, website, username, password, totp_key, favorite FROM passwords")
         return cursor.fetchall()
+
+    def toggle_favorite(self, password_id: int) -> bool:
+        """Toggle favorite status and return new status."""
+        cursor = self._conn.cursor()
+        cursor.execute("SELECT favorite FROM passwords WHERE id = ?", (password_id,))
+        result = cursor.fetchone()
+        if result:
+            new_status = 0 if result[0] else 1
+            cursor.execute("UPDATE passwords SET favorite = ? WHERE id = ?", (new_status, password_id))
+            self._conn.commit()
+            self._save()
+            return bool(new_status)
+        return False
 
     def delete_password(self, password_id: int):
         cursor = self._conn.cursor()
