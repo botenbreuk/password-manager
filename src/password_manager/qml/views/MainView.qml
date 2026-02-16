@@ -6,10 +6,23 @@ import QtQuick.Effects
 
 Item {
     id: mainView
+    focus: true
 
     // Edit mode state
     property bool editMode: false
     property int editingRow: -1
+
+    // Sidebar state
+    property bool sidebarExpanded: true
+    property string searchQuery: ""
+
+    // Click outside to unfocus search
+    MouseArea {
+        anchors.fill: parent
+        onClicked: mainView.forceActiveFocus()
+        propagateComposedEvents: true
+        z: -1
+    }
 
     // TOTP refresh trigger (changes every 30 seconds)
     property int totpRefreshTrigger: 0
@@ -40,9 +53,27 @@ Item {
 
         RowLayout {
             anchors.fill: parent
-            anchors.leftMargin: 20
+            anchors.leftMargin: 12
             anchors.rightMargin: 20
-            spacing: 15
+            spacing: 12
+
+            // Hamburger menu button
+            RoundButton {
+                width: 40
+                height: 40
+                flat: true
+                ToolTip.visible: hovered
+                ToolTip.text: sidebarExpanded ? "Collapse menu" : "Expand menu"
+                onClicked: sidebarExpanded = !sidebarExpanded
+
+                Text {
+                    anchors.centerIn: parent
+                    text: "\ue5d2"
+                    font.family: "Material Icons"
+                    font.pixelSize: 24
+                    color: "#e0e0e0"
+                }
+            }
 
             Text {
                 text: "\ue897"
@@ -59,6 +90,82 @@ Item {
             }
 
             Item { Layout.fillWidth: true }
+
+            // Search bar
+            Rectangle {
+                Layout.preferredWidth: 250
+                height: 36
+                color: "#1e1e1e"
+                radius: 18
+                border.color: searchField.activeFocus ? "#1976D2" : "#3a3a3a"
+                border.width: 1
+
+                Behavior on border.color {
+                    ColorAnimation { duration: 150 }
+                }
+
+                RowLayout {
+                    anchors.fill: parent
+                    anchors.leftMargin: 12
+                    anchors.rightMargin: 12
+                    spacing: 8
+
+                    Text {
+                        text: "\ue8b6"
+                        font.family: "Material Icons"
+                        font.pixelSize: 18
+                        color: "#707070"
+                    }
+
+                    Item {
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+
+                        TextInput {
+                            id: searchField
+                            anchors.fill: parent
+                            anchors.topMargin: 1
+                            verticalAlignment: TextInput.AlignVCenter
+                            color: "#ffffff"
+                            font.pixelSize: 13
+                            clip: true
+                            onTextChanged: searchQuery = text
+                        }
+
+                        Text {
+                            anchors.fill: parent
+                            anchors.topMargin: 1
+                            verticalAlignment: Text.AlignVCenter
+                            text: "Search passwords..."
+                            color: "#606060"
+                            font.pixelSize: 13
+                            visible: searchField.text === "" && !searchField.activeFocus
+                        }
+                    }
+
+                    Text {
+                        text: "\ue5cd"
+                        font.family: "Material Icons"
+                        font.pixelSize: 18
+                        color: "#707070"
+                        visible: searchField.text !== ""
+                        opacity: clearSearchMouse.containsMouse ? 1 : 0.7
+
+                        MouseArea {
+                            id: clearSearchMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: {
+                                searchField.text = ""
+                                searchField.focus = false
+                            }
+                        }
+                    }
+                }
+            }
+
+            Item { width: 8 }
 
             RoundButton {
                 width: 40
@@ -96,7 +203,148 @@ Item {
         anchors.margins: 16
         spacing: 16
 
-        // Password list (left panel)
+        // Collapsible sidebar
+        Rectangle {
+            id: sidebar
+            Layout.fillHeight: true
+            Layout.preferredWidth: sidebarExpanded ? 220 : 60
+            color: "#252525"
+            radius: 12
+
+            Behavior on Layout.preferredWidth {
+                NumberAnimation { duration: 200; easing.type: Easing.OutQuad }
+            }
+
+            layer.enabled: true
+            layer.effect: MultiEffect {
+                shadowEnabled: true
+                shadowColor: "#40000000"
+                shadowBlur: 0.5
+                shadowVerticalOffset: 2
+            }
+
+            ColumnLayout {
+                anchors.fill: parent
+                anchors.margins: 8
+                spacing: 4
+
+                // Navigation section
+                SidebarItem {
+                    icon: "\ue899"
+                    label: "All Passwords"
+                    expanded: sidebarExpanded
+                    selected: true
+                    badgeCount: passwordList.count
+                }
+
+                SidebarItem {
+                    icon: "\ue838"
+                    label: "Favorites"
+                    expanded: sidebarExpanded
+                    enabled: false
+                    ToolTip.visible: hovered && !sidebarExpanded
+                    ToolTip.text: "Favorites (coming soon)"
+                }
+
+                // Separator
+                Rectangle {
+                    Layout.fillWidth: true
+                    Layout.topMargin: 8
+                    Layout.bottomMargin: 8
+                    Layout.leftMargin: 8
+                    Layout.rightMargin: 8
+                    height: 1
+                    color: "#3a3a3a"
+                }
+
+                // Tools section header
+                Text {
+                    text: "TOOLS"
+                    font.pixelSize: 10
+                    font.weight: Font.Medium
+                    font.letterSpacing: 1
+                    color: "#606060"
+                    visible: sidebarExpanded
+                    Layout.leftMargin: 12
+                    Layout.bottomMargin: 4
+                }
+
+                SidebarItem {
+                    icon: "\ue73c"
+                    label: "Password Generator"
+                    expanded: sidebarExpanded
+                    onClicked: generatorPopup.open()
+                }
+
+                SidebarItem {
+                    icon: "\ue2c4"
+                    label: "Export Data"
+                    expanded: sidebarExpanded
+                    enabled: false
+                }
+
+                // Separator
+                Rectangle {
+                    Layout.fillWidth: true
+                    Layout.topMargin: 8
+                    Layout.bottomMargin: 8
+                    Layout.leftMargin: 8
+                    Layout.rightMargin: 8
+                    height: 1
+                    color: "#3a3a3a"
+                }
+
+                // Settings section (collapsible)
+                SidebarSection {
+                    icon: "\ue8b8"
+                    label: "Settings"
+                    expanded: sidebarExpanded
+
+                    SidebarItem {
+                        icon: "\ue32a"
+                        label: "Appearance"
+                        expanded: sidebarExpanded
+                        indent: true
+                        enabled: false
+                    }
+
+                    SidebarItem {
+                        icon: "\ue897"
+                        label: "Security"
+                        expanded: sidebarExpanded
+                        indent: true
+                        enabled: false
+                    }
+
+                    SidebarItem {
+                        icon: "\ue312"
+                        label: "Keyboard Shortcuts"
+                        expanded: sidebarExpanded
+                        indent: true
+                        onClicked: shortcutsPopup.open()
+                    }
+                }
+
+                Item { Layout.fillHeight: true }
+
+                // About section at bottom
+                Rectangle {
+                    Layout.fillWidth: true
+                    Layout.topMargin: 4
+                    height: 1
+                    color: "#3a3a3a"
+                }
+
+                SidebarItem {
+                    icon: "\ue88e"
+                    label: "About"
+                    expanded: sidebarExpanded
+                    onClicked: aboutPopup.open()
+                }
+            }
+        }
+
+        // Password list (main panel)
         Rectangle {
             Layout.fillWidth: true
             Layout.fillHeight: true
@@ -129,7 +377,7 @@ Item {
                         spacing: 10
 
                         Text {
-                            text: "Saved Passwords"
+                            text: searchQuery !== "" ? "Search Results" : "Saved Passwords"
                             font.pixelSize: 15
                             font.weight: Font.DemiBold
                             color: "#ffffff"
@@ -234,8 +482,21 @@ Item {
                     delegate: Rectangle {
                         id: delegateItem
                         width: passwordList.width
-                        height: 56
+                        height: matchesSearch ? 56 : 0
+                        visible: matchesSearch
+                        clip: true
                         color: editMode && editingRow === index ? "#1976D2" + "30" : (mouseArea.containsMouse ? "#2f2f2f" : "transparent")
+
+                        property bool matchesSearch: {
+                            if (searchQuery === "") return true
+                            var query = searchQuery.toLowerCase()
+                            return model.website.toLowerCase().indexOf(query) !== -1 ||
+                                   model.username.toLowerCase().indexOf(query) !== -1
+                        }
+
+                        Behavior on height {
+                            NumberAnimation { duration: 150 }
+                        }
 
                         Behavior on color {
                             ColorAnimation { duration: 150 }
@@ -828,6 +1089,782 @@ Item {
     function updateEntry() {
         if (passwordController && passwordController.updateEntry(editingRow, websiteField.text, usernameField.text, passwordField.text, totpField.text)) {
             cancelEdit()
+        }
+    }
+
+    function generateRandomPassword(length, useUppercase, useLowercase, useNumbers, useSymbols) {
+        var chars = ""
+        if (useLowercase) chars += "abcdefghijklmnopqrstuvwxyz"
+        if (useUppercase) chars += "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        if (useNumbers) chars += "0123456789"
+        if (useSymbols) chars += "!@#$%^&*()_+-=[]{}|;:,.<>?"
+        if (chars === "") chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+
+        var password = ""
+        for (var i = 0; i < length; i++) {
+            password += chars.charAt(Math.floor(Math.random() * chars.length))
+        }
+        return password
+    }
+
+    // Sidebar Item Component
+    component SidebarItem: Rectangle {
+        id: sidebarItem
+        Layout.fillWidth: true
+        height: 40
+        radius: 8
+        color: selected ? "#1976D2" + "30" : (itemMouse.containsMouse ? "#2f2f2f" : "transparent")
+        opacity: enabled ? 1.0 : 0.5
+
+        property string icon: ""
+        property string label: ""
+        property bool expanded: true
+        property bool selected: false
+        property bool indent: false
+        property int badgeCount: 0
+        readonly property alias hovered: itemMouse.containsMouse
+
+        signal clicked()
+
+        Behavior on color {
+            ColorAnimation { duration: 150 }
+        }
+
+        MouseArea {
+            id: itemMouse
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: parent.enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+            onClicked: if (parent.enabled) parent.clicked()
+        }
+
+        RowLayout {
+            anchors.fill: parent
+            anchors.leftMargin: indent ? 24 : 8
+            anchors.rightMargin: 8
+            spacing: 10
+
+            Text {
+                text: icon
+                font.family: "Material Icons"
+                font.pixelSize: 20
+                color: selected ? "#1976D2" : "#a0a0a0"
+                Layout.preferredWidth: 24
+                horizontalAlignment: Text.AlignHCenter
+            }
+
+            Text {
+                text: label
+                font.pixelSize: 13
+                color: selected ? "#ffffff" : "#c0c0c0"
+                visible: expanded
+                Layout.fillWidth: true
+                elide: Text.ElideRight
+            }
+
+            Rectangle {
+                width: badgeText.width + 12
+                height: 20
+                radius: 10
+                color: "#1976D2"
+                visible: expanded && badgeCount > 0
+
+                Text {
+                    id: badgeText
+                    anchors.centerIn: parent
+                    text: badgeCount
+                    font.pixelSize: 11
+                    font.weight: Font.Bold
+                    color: "#ffffff"
+                }
+            }
+        }
+
+        ToolTip {
+            visible: itemMouse.containsMouse && !expanded
+            text: label
+            delay: 500
+        }
+    }
+
+    // Sidebar Section Component (collapsible)
+    component SidebarSection: ColumnLayout {
+        id: sidebarSection
+        Layout.fillWidth: true
+        spacing: 2
+
+        property string icon: ""
+        property string label: ""
+        property bool expanded: true
+        property bool sectionExpanded: true
+
+        default property alias content: sectionContent.children
+
+        Rectangle {
+            Layout.fillWidth: true
+            height: 40
+            radius: 8
+            color: sectionMouse.containsMouse ? "#2f2f2f" : "transparent"
+
+            Behavior on color {
+                ColorAnimation { duration: 150 }
+            }
+
+            MouseArea {
+                id: sectionMouse
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: sectionExpanded = !sectionExpanded
+            }
+
+            RowLayout {
+                anchors.fill: parent
+                anchors.leftMargin: 8
+                anchors.rightMargin: 8
+                spacing: 10
+
+                Text {
+                    text: icon
+                    font.family: "Material Icons"
+                    font.pixelSize: 20
+                    color: "#a0a0a0"
+                    Layout.preferredWidth: 24
+                    horizontalAlignment: Text.AlignHCenter
+                }
+
+                Text {
+                    text: label
+                    font.pixelSize: 13
+                    color: "#c0c0c0"
+                    visible: expanded
+                    Layout.fillWidth: true
+                }
+
+                Text {
+                    text: sectionExpanded ? "\ue5cf" : "\ue5ce"
+                    font.family: "Material Icons"
+                    font.pixelSize: 18
+                    color: "#606060"
+                    visible: expanded
+
+                    Behavior on text {
+                        SequentialAnimation {
+                            PropertyAnimation { target: parent; property: "opacity"; to: 0; duration: 75 }
+                            PropertyAction {}
+                            PropertyAnimation { target: parent; property: "opacity"; to: 1; duration: 75 }
+                        }
+                    }
+                }
+            }
+        }
+
+        ColumnLayout {
+            id: sectionContent
+            Layout.fillWidth: true
+            visible: sectionExpanded && expanded
+            spacing: 2
+
+            Behavior on visible {
+                NumberAnimation { duration: 150 }
+            }
+        }
+    }
+
+    // Password Generator Dialog
+    Dialog {
+        id: generatorPopup
+        title: ""
+        modal: true
+        width: 420
+        height: 440
+        anchors.centerIn: parent
+        padding: 0
+        topPadding: 0
+        dim: true
+
+        Material.theme: Material.Dark
+        Material.accent: "#1976D2"
+
+        Overlay.modal: Rectangle {
+            color: "#D0000000"
+        }
+
+        background: Rectangle {
+            color: "#E8141414"
+            radius: 16
+            border.color: "#404040"
+            border.width: 1
+
+            layer.enabled: true
+            layer.effect: MultiEffect {
+                shadowEnabled: true
+                shadowColor: "#80000000"
+                shadowBlur: 1.5
+                shadowVerticalOffset: 8
+            }
+        }
+
+        header: Rectangle {
+            height: 60
+            color: "#252525"
+            radius: 16
+
+            Rectangle {
+                anchors.bottom: parent.bottom
+                anchors.left: parent.left
+                anchors.right: parent.right
+                height: 20
+                color: "#252525"
+            }
+
+            RowLayout {
+                anchors.fill: parent
+                anchors.leftMargin: 24
+                anchors.rightMargin: 24
+
+                Text {
+                    text: "\ue73c"
+                    font.family: "Material Icons"
+                    font.pixelSize: 28
+                    color: "#1976D2"
+                }
+
+                Text {
+                    text: "Password Generator"
+                    font.pixelSize: 20
+                    font.weight: Font.DemiBold
+                    color: "#ffffff"
+                }
+
+                Item { Layout.fillWidth: true }
+
+                RoundButton {
+                    width: 36
+                    height: 36
+                    flat: true
+                    onClicked: generatorPopup.close()
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: "\ue5cd"
+                        font.family: "Material Icons"
+                        font.pixelSize: 20
+                        color: "#808080"
+                    }
+                }
+            }
+        }
+
+        footer: Item { height: 0 }
+
+        ColumnLayout {
+            anchors.fill: parent
+            anchors.margins: 20
+            spacing: 12
+
+            // Generated password display
+            Rectangle {
+                Layout.fillWidth: true
+                Layout.bottomMargin: 8
+                height: 48
+                color: "#1e1e1e"
+                radius: 8
+                border.color: "#3a3a3a"
+
+                RowLayout {
+                    anchors.fill: parent
+                    anchors.leftMargin: 14
+                    anchors.rightMargin: 10
+                    spacing: 8
+
+                    Text {
+                        id: generatedPasswordText
+                        text: generateRandomPassword(genLengthSlider.value, genUppercase.checked, genLowercase.checked, genNumbers.checked, genSymbols.checked)
+                        font.pixelSize: 15
+                        font.family: "Menlo"
+                        color: "#ffffff"
+                        Layout.fillWidth: true
+                        elide: Text.ElideMiddle
+                    }
+
+                    RoundButton {
+                        width: 32
+                        height: 32
+                        flat: true
+                        ToolTip.visible: hovered
+                        ToolTip.text: "Copy to clipboard"
+                        onClicked: {
+                            if (passwordController) {
+                                passwordController.copyToClipboard(generatedPasswordText.text)
+                            }
+                        }
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: "\ue14d"
+                            font.family: "Material Icons"
+                            font.pixelSize: 18
+                            color: "#1976D2"
+                        }
+                    }
+
+                    RoundButton {
+                        width: 32
+                        height: 32
+                        flat: true
+                        ToolTip.visible: hovered
+                        ToolTip.text: "Generate new"
+                        onClicked: generatedPasswordText.text = generateRandomPassword(genLengthSlider.value, genUppercase.checked, genLowercase.checked, genNumbers.checked, genSymbols.checked)
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: "\ue5d5"
+                            font.family: "Material Icons"
+                            font.pixelSize: 18
+                            color: "#808080"
+                        }
+                    }
+                }
+            }
+
+            // Length slider
+            Column {
+                Layout.fillWidth: true
+                spacing: 6
+
+                Row {
+                    width: parent.width
+                    spacing: 8
+
+                    Text {
+                        text: "\ue8ff"
+                        font.family: "Material Icons"
+                        font.pixelSize: 16
+                        color: "#1976D2"
+                    }
+
+                    Text {
+                        text: "Length"
+                        font.pixelSize: 13
+                        font.weight: Font.Medium
+                        color: "#ffffff"
+                    }
+
+                    Item { width: parent.width - 180 }
+
+                    Text {
+                        text: genLengthSlider.value + " characters"
+                        font.pixelSize: 13
+                        color: "#808080"
+                    }
+                }
+
+                Slider {
+                    id: genLengthSlider
+                    width: parent.width
+                    from: 8
+                    to: 64
+                    value: 16
+                    stepSize: 1
+                    onValueChanged: generatedPasswordText.text = generateRandomPassword(value, genUppercase.checked, genLowercase.checked, genNumbers.checked, genSymbols.checked)
+                }
+            }
+
+            // Character options
+            Column {
+                Layout.fillWidth: true
+                spacing: 6
+
+                Row {
+                    spacing: 8
+
+                    Text {
+                        text: "\ue8d3"
+                        font.family: "Material Icons"
+                        font.pixelSize: 16
+                        color: "#1976D2"
+                    }
+
+                    Text {
+                        text: "Character Types"
+                        font.pixelSize: 13
+                        font.weight: Font.Medium
+                        color: "#ffffff"
+                    }
+                }
+
+                GridLayout {
+                    width: parent.width
+                    columns: 2
+                    rowSpacing: 4
+                    columnSpacing: 8
+
+                    CheckBox {
+                        id: genUppercase
+                        text: "Uppercase (A-Z)"
+                        checked: true
+                        onCheckedChanged: generatedPasswordText.text = generateRandomPassword(genLengthSlider.value, checked, genLowercase.checked, genNumbers.checked, genSymbols.checked)
+                    }
+
+                    CheckBox {
+                        id: genLowercase
+                        text: "Lowercase (a-z)"
+                        checked: true
+                        onCheckedChanged: generatedPasswordText.text = generateRandomPassword(genLengthSlider.value, genUppercase.checked, checked, genNumbers.checked, genSymbols.checked)
+                    }
+
+                    CheckBox {
+                        id: genNumbers
+                        text: "Numbers (0-9)"
+                        checked: true
+                        onCheckedChanged: generatedPasswordText.text = generateRandomPassword(genLengthSlider.value, genUppercase.checked, genLowercase.checked, checked, genSymbols.checked)
+                    }
+
+                    CheckBox {
+                        id: genSymbols
+                        text: "Symbols (!@#$)"
+                        checked: true
+                        onCheckedChanged: generatedPasswordText.text = generateRandomPassword(genLengthSlider.value, genUppercase.checked, genLowercase.checked, genNumbers.checked, checked)
+                    }
+                }
+            }
+
+            Item { Layout.preferredHeight: 12 }
+
+            Button {
+                text: "Use This Password"
+                Layout.fillWidth: true
+                Layout.preferredHeight: 44
+                highlighted: true
+                font.weight: Font.Medium
+                font.pixelSize: 14
+                onClicked: {
+                    passwordField.text = generatedPasswordText.text
+                    generatorPopup.close()
+                }
+            }
+        }
+    }
+
+    // Keyboard Shortcuts Dialog
+    Dialog {
+        id: shortcutsPopup
+        title: ""
+        modal: true
+        width: 450
+        height: 420
+        anchors.centerIn: parent
+        padding: 0
+        topPadding: 0
+        dim: true
+
+        Material.theme: Material.Dark
+        Material.accent: "#1976D2"
+
+        Overlay.modal: Rectangle {
+            color: "#D0000000"
+        }
+
+        background: Rectangle {
+            color: "#E8141414"
+            radius: 16
+            border.color: "#404040"
+            border.width: 1
+
+            layer.enabled: true
+            layer.effect: MultiEffect {
+                shadowEnabled: true
+                shadowColor: "#80000000"
+                shadowBlur: 1.5
+                shadowVerticalOffset: 8
+            }
+        }
+
+        header: Rectangle {
+            height: 60
+            color: "#252525"
+            radius: 16
+
+            Rectangle {
+                anchors.bottom: parent.bottom
+                anchors.left: parent.left
+                anchors.right: parent.right
+                height: 20
+                color: "#252525"
+            }
+
+            RowLayout {
+                anchors.fill: parent
+                anchors.leftMargin: 24
+                anchors.rightMargin: 24
+
+                Text {
+                    text: "\ue312"
+                    font.family: "Material Icons"
+                    font.pixelSize: 28
+                    color: "#1976D2"
+                }
+
+                Text {
+                    text: "Keyboard Shortcuts"
+                    font.pixelSize: 20
+                    font.weight: Font.DemiBold
+                    color: "#ffffff"
+                }
+
+                Item { Layout.fillWidth: true }
+
+                RoundButton {
+                    width: 36
+                    height: 36
+                    flat: true
+                    onClicked: shortcutsPopup.close()
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: "\ue5cd"
+                        font.family: "Material Icons"
+                        font.pixelSize: 20
+                        color: "#808080"
+                    }
+                }
+            }
+        }
+
+        footer: Item { height: 0 }
+
+        ListView {
+            anchors.fill: parent
+            anchors.margins: 20
+            clip: true
+            spacing: 6
+
+            model: ListModel {
+                ListElement { shortcut: "Ctrl/Cmd + F"; action: "Search passwords" }
+                ListElement { shortcut: "Ctrl/Cmd + N"; action: "Add new password" }
+                ListElement { shortcut: "Ctrl/Cmd + L"; action: "Lock vault" }
+                ListElement { shortcut: "Ctrl/Cmd + G"; action: "Generate password" }
+                ListElement { shortcut: "Escape"; action: "Cancel / Close dialog" }
+                ListElement { shortcut: "Enter"; action: "Submit form" }
+                ListElement { shortcut: "Ctrl/Cmd + ,"; action: "Toggle sidebar" }
+            }
+
+            delegate: Rectangle {
+                width: ListView.view ? ListView.view.width : 0
+                height: 44
+                color: "transparent"
+                radius: 8
+
+                RowLayout {
+                    anchors.fill: parent
+                    anchors.leftMargin: 12
+                    anchors.rightMargin: 12
+                    spacing: 16
+
+                    Rectangle {
+                        Layout.preferredWidth: 150
+                        height: 32
+                        color: "#252525"
+                        radius: 6
+                        border.color: "#404040"
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: model.shortcut
+                            font.pixelSize: 12
+                            font.family: "Menlo"
+                            color: "#c0c0c0"
+                        }
+                    }
+
+                    Text {
+                        text: model.action
+                        font.pixelSize: 14
+                        color: "#e0e0e0"
+                        Layout.fillWidth: true
+                    }
+                }
+            }
+        }
+    }
+
+    // About Dialog
+    Dialog {
+        id: aboutPopup
+        title: ""
+        modal: true
+        width: 380
+        height: 320
+        anchors.centerIn: parent
+        padding: 0
+        topPadding: 0
+        dim: true
+
+        Material.theme: Material.Dark
+        Material.accent: "#1976D2"
+
+        Overlay.modal: Rectangle {
+            color: "#D0000000"
+        }
+
+        background: Rectangle {
+            color: "#E8141414"
+            radius: 16
+            border.color: "#404040"
+            border.width: 1
+
+            layer.enabled: true
+            layer.effect: MultiEffect {
+                shadowEnabled: true
+                shadowColor: "#80000000"
+                shadowBlur: 1.5
+                shadowVerticalOffset: 8
+            }
+        }
+
+        header: Rectangle {
+            height: 60
+            color: "#252525"
+            radius: 16
+
+            Rectangle {
+                anchors.bottom: parent.bottom
+                anchors.left: parent.left
+                anchors.right: parent.right
+                height: 20
+                color: "#252525"
+            }
+
+            RowLayout {
+                anchors.fill: parent
+                anchors.leftMargin: 24
+                anchors.rightMargin: 24
+
+                Text {
+                    text: "\ue88e"
+                    font.family: "Material Icons"
+                    font.pixelSize: 28
+                    color: "#1976D2"
+                }
+
+                Text {
+                    text: "About"
+                    font.pixelSize: 20
+                    font.weight: Font.DemiBold
+                    color: "#ffffff"
+                }
+
+                Item { Layout.fillWidth: true }
+
+                RoundButton {
+                    width: 36
+                    height: 36
+                    flat: true
+                    onClicked: aboutPopup.close()
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: "\ue5cd"
+                        font.family: "Material Icons"
+                        font.pixelSize: 20
+                        color: "#808080"
+                    }
+                }
+            }
+        }
+
+        footer: Item { height: 0 }
+
+        ColumnLayout {
+            anchors.fill: parent
+            anchors.margins: 20
+            spacing: 16
+
+            Item { Layout.fillHeight: true }
+
+            ColumnLayout {
+                Layout.alignment: Qt.AlignHCenter
+                spacing: 16
+
+                Text {
+                    text: "\ue897"
+                    font.family: "Material Icons"
+                    font.pixelSize: 56
+                    color: "#1976D2"
+                    Layout.alignment: Qt.AlignHCenter
+                }
+
+                Text {
+                    text: "Password Manager"
+                    font.pixelSize: 22
+                    font.weight: Font.DemiBold
+                    color: "#ffffff"
+                    Layout.alignment: Qt.AlignHCenter
+                }
+
+                Text {
+                    text: "Version 1.0.0"
+                    font.pixelSize: 14
+                    color: "#808080"
+                    Layout.alignment: Qt.AlignHCenter
+                }
+
+                Text {
+                    text: "Secure password storage with TOTP support"
+                    font.pixelSize: 13
+                    color: "#606060"
+                    Layout.alignment: Qt.AlignHCenter
+                }
+            }
+
+            Item { Layout.fillHeight: true }
+        }
+    }
+
+    // Keyboard shortcuts
+    Shortcut {
+        sequence: "Ctrl+F"
+        onActivated: searchField.forceActiveFocus()
+    }
+
+    Shortcut {
+        sequence: "Ctrl+N"
+        onActivated: {
+            cancelEdit()
+            websiteField.focus = true
+        }
+    }
+
+    Shortcut {
+        sequence: "Ctrl+L"
+        onActivated: {
+            vaultController.closeVault()
+            root.vaultUnlocked = false
+        }
+    }
+
+    Shortcut {
+        sequence: "Ctrl+G"
+        onActivated: generatorPopup.open()
+    }
+
+    Shortcut {
+        sequence: "Ctrl+,"
+        onActivated: sidebarExpanded = !sidebarExpanded
+    }
+
+    Shortcut {
+        sequence: "Escape"
+        onActivated: {
+            if (generatorPopup.visible) generatorPopup.close()
+            else if (shortcutsPopup.visible) shortcutsPopup.close()
+            else if (aboutPopup.visible) aboutPopup.close()
+            else if (editMode) cancelEdit()
+            else if (searchField.activeFocus) {
+                searchField.text = ""
+                searchField.focus = false
+            }
         }
     }
 }

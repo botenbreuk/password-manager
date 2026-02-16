@@ -167,6 +167,12 @@ class PasswordController(QObject):
                 clipboard = QGuiApplication.clipboard()
                 clipboard.setText(code)
 
+    @pyqtSlot(str)
+    def copyToClipboard(self, text: str):
+        if text:
+            clipboard = QGuiApplication.clipboard()
+            clipboard.setText(text)
+
     @pyqtSlot(int, result=str)
     def generateTotp(self, row: int) -> str:
         totp_key = self._password_model.getTotpKey(row)
