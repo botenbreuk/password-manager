@@ -34,7 +34,7 @@ class VaultManager:
 
         # Create temporary encrypted database
         self._db_path = Path(tempfile.mktemp(suffix=".db"))
-        self._conn = sqlcipher3.connect(str(self._db_path))
+        self._conn = sqlcipher3.connect(str(self._db_path), check_same_thread=False)
         self._conn.execute(f"PRAGMA key = '{master_password}'")
         self._init_database()
 
@@ -57,7 +57,7 @@ class VaultManager:
                 self._db_path.write_bytes(zf.read(VAULT_DB_FILE))
 
             # Open with SQLCipher
-            self._conn = sqlcipher3.connect(str(self._db_path))
+            self._conn = sqlcipher3.connect(str(self._db_path), check_same_thread=False)
             self._conn.execute(f"PRAGMA key = '{master_password}'")
 
             # Verify password by attempting a query

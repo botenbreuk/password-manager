@@ -8,12 +8,23 @@ from password_manager.controllers.vault_controller import VaultController
 from password_manager.controllers.password_controller import PasswordController
 
 
+def get_resource_path(relative_path: str) -> Path:
+    """Get path to resource, works for dev and PyInstaller bundle."""
+    if getattr(sys, 'frozen', False):
+        # Running as PyInstaller bundle
+        base_path = Path(sys._MEIPASS)
+    else:
+        # Running in normal Python environment
+        base_path = Path(__file__).parent
+    return base_path / relative_path
+
+
 def main():
     app = QGuiApplication(sys.argv)
     app.setApplicationName("Password Manager")
 
     # Load Material Icons font
-    font_path = Path(__file__).parent / "resources" / "fonts" / "MaterialIcons-Regular.ttf"
+    font_path = get_resource_path("resources/fonts/MaterialIcons-Regular.ttf")
     QFontDatabase.addApplicationFont(str(font_path))
 
     # Create controllers with app as parent to control lifetime
@@ -25,7 +36,7 @@ def main():
     engine.rootContext().setContextProperty("passwordController", password_controller)
 
     # Load main QML file
-    qml_file = Path(__file__).parent / "qml" / "Main.qml"
+    qml_file = get_resource_path("qml/Main.qml")
     engine.load(str(qml_file))
 
     if not engine.rootObjects():

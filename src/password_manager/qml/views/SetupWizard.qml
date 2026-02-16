@@ -269,13 +269,25 @@ Dialog {
 
         // Create button
         Button {
-            text: "Create Vault"
+            text: vaultController && vaultController.loading ? "Creating..." : "Create Vault"
             Layout.fillWidth: true
             Layout.preferredHeight: 44
             highlighted: true
             font.weight: Font.Medium
             font.pixelSize: 14
+            enabled: !vaultController || !vaultController.loading
             onClicked: createVault()
+        }
+    }
+
+    Connections {
+        target: vaultController
+        function onVaultCreated() {
+            setupDialog.close()
+            vaultCreated()
+        }
+        function onVaultError(error) {
+            locationError = error || "Failed to create vault"
         }
     }
 
@@ -334,8 +346,6 @@ Dialog {
         if (!valid) return
 
         vaultController.createVault(locationField.text, nameField.text.trim(), passwordField.text)
-        setupDialog.close()
-        vaultCreated()
     }
 
     onOpened: {

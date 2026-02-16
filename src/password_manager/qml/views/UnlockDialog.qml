@@ -389,10 +389,11 @@ Item {
                     Button {
                         width: parent.width
                         height: 48
-                        text: "Unlock Vault"
+                        text: vaultController && vaultController.loading ? "Unlocking..." : "Unlock Vault"
                         highlighted: true
                         font.weight: Font.Medium
                         font.pixelSize: 15
+                        enabled: !vaultController || !vaultController.loading
                         onClicked: unlock()
                     }
 
@@ -435,6 +436,16 @@ Item {
         }
     }
 
+    Connections {
+        target: vaultController
+        function onVaultOpened() {
+            unlockSuccessful()
+        }
+        function onVaultError(error) {
+            passwordError = error || "Failed to unlock vault. Incorrect password?"
+        }
+    }
+
     function unlock() {
         var valid = true
 
@@ -454,10 +465,6 @@ Item {
 
         if (!valid) return
 
-        if (vaultController.openVault(selectedVaultPath, passwordField.text)) {
-            unlockSuccessful()
-        } else {
-            passwordError = "Failed to unlock vault. Incorrect password?"
-        }
+        vaultController.openVault(selectedVaultPath, passwordField.text)
     }
 }
