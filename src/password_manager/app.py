@@ -37,7 +37,3 @@ def main():
     del engine
 
     sys.exit(exit_code)
-
-
-if __name__ == "__main__":
-    main()

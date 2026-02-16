@@ -42,6 +42,3 @@ def generate_totp(secret: str, interval: int = 30, digits: int = 6) -> str:
         return ""
 
 
-def get_totp_remaining_seconds(interval: int = 30) -> int:
-    """Get remaining seconds until the current TOTP code expires."""
-    return interval - (int(time.time()) % interval)

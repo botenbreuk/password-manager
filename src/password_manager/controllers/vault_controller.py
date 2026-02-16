@@ -26,10 +26,6 @@ class VaultController(QObject):
         self._vault_name = ""
         self._load_recent_vaults()
 
-    def set_password_controller(self, password_controller):
-        """Set the password controller for vault-password coordination."""
-        self._password_controller = password_controller
-
     def _load_recent_vaults(self):
         vaults = self._settings.get_recent_vaults()
         self._recent_vaults_model.load_vaults(vaults)

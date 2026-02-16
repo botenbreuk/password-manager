@@ -102,12 +102,6 @@ class PasswordListModel(QAbstractListModel):
             return self._entries[row]['favorite']
         return False
 
-    @pyqtSlot(int, result=bool)
-    def isFavorite(self, row: int) -> bool:
-        if 0 <= row < len(self._entries):
-            return self._entries[row]['favorite']
-        return False
-
     @pyqtProperty(int, notify=favoriteCountChanged)
     def favoriteCount(self) -> int:
         return sum(1 for entry in self._entries if entry.get('favorite', False))
