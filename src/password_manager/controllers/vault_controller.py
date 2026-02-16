@@ -110,3 +110,23 @@ class VaultController(QObject):
     @pyqtSlot(str, result=bool)
     def validateMasterPassword(self, password: str) -> bool:
         return validate_password(password)
+
+    @pyqtSlot(str, result=bool)
+    def changeVaultName(self, new_name: str) -> bool:
+        """Change the vault name."""
+        if not new_name.strip():
+            return False
+        self._vault.change_vault_name(new_name.strip())
+        self._vault_name = new_name.strip()
+        self.vaultNameChanged.emit()
+        # Update recent vaults with new name
+        if self._vault.vault_path:
+            self._settings.add_recent_vault(str(self._vault.vault_path), self._vault_name)
+            self._load_recent_vaults()
+            self.recentVaultsChanged.emit()
+        return True
+
+    @pyqtSlot(str, str, result=bool)
+    def changeMasterPassword(self, current_password: str, new_password: str) -> bool:
+        """Change the master password."""
+        return self._vault.change_master_password(current_password, new_password)

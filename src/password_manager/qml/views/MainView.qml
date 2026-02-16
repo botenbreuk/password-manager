@@ -314,7 +314,7 @@ Item {
                         label: "Security"
                         expanded: sidebarExpanded
                         indent: true
-                        enabled: false
+                        onClicked: securityDialog.open()
                     }
 
                     SidebarItem {
@@ -2161,6 +2161,333 @@ Item {
                 }
             }
             exportLocationField.text = path
+        }
+    }
+
+    // Security Settings Dialog
+    Dialog {
+        id: securityDialog
+        title: ""
+        modal: true
+        width: 480
+        height: 520
+        anchors.centerIn: parent
+        padding: 0
+        topPadding: 0
+        dim: true
+
+        Material.theme: Material.Dark
+        Material.accent: "#1976D2"
+
+        property string nameError: ""
+        property string currentPasswordError: ""
+        property string newPasswordError: ""
+        property string confirmPasswordError: ""
+        property bool nameSuccess: false
+        property bool passwordSuccess: false
+
+        Overlay.modal: Rectangle {
+            color: "#D0000000"
+        }
+
+        background: Rectangle {
+            color: "#E8141414"
+            radius: 16
+            border.color: "#404040"
+            border.width: 1
+
+            layer.enabled: true
+            layer.effect: MultiEffect {
+                shadowEnabled: true
+                shadowColor: "#80000000"
+                shadowBlur: 1.5
+                shadowVerticalOffset: 8
+            }
+        }
+
+        header: Rectangle {
+            height: 60
+            color: "#252525"
+            radius: 16
+
+            Rectangle {
+                anchors.bottom: parent.bottom
+                anchors.left: parent.left
+                anchors.right: parent.right
+                height: 20
+                color: "#252525"
+            }
+
+            RowLayout {
+                anchors.fill: parent
+                anchors.leftMargin: 24
+                anchors.rightMargin: 16
+
+                Text {
+                    text: "\ue897"
+                    font.family: "Material Icons"
+                    font.pixelSize: 28
+                    color: "#1976D2"
+                }
+
+                Text {
+                    text: "Security Settings"
+                    font.pixelSize: 20
+                    font.weight: Font.DemiBold
+                    color: "#ffffff"
+                }
+
+                Item { Layout.fillWidth: true }
+
+                RoundButton {
+                    width: 36
+                    height: 36
+                    flat: true
+                    onClicked: securityDialog.close()
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: "\ue5cd"
+                        font.family: "Material Icons"
+                        font.pixelSize: 20
+                        color: "#808080"
+                    }
+                }
+            }
+        }
+
+        footer: Item { height: 0 }
+
+        ColumnLayout {
+            anchors.fill: parent
+            anchors.margins: 20
+            spacing: 16
+
+            // Change Vault Name Section
+            Column {
+                Layout.fillWidth: true
+                spacing: 6
+
+                Row {
+                    spacing: 8
+
+                    Text {
+                        text: "\ue8d3"
+                        font.family: "Material Icons"
+                        font.pixelSize: 16
+                        color: "#1976D2"
+                    }
+
+                    Text {
+                        text: "Vault Name"
+                        font.pixelSize: 13
+                        font.weight: Font.Medium
+                        color: "#ffffff"
+                    }
+                }
+
+                Row {
+                    width: parent.width
+                    spacing: 10
+
+                    TextField {
+                        id: vaultNameField
+                        width: parent.width - changeNameButton.width - 10
+                        placeholderText: "Enter new vault name"
+                        text: vaultController ? vaultController.vaultName : ""
+                    }
+
+                    Button {
+                        id: changeNameButton
+                        text: "Save"
+                        highlighted: true
+                        onClicked: {
+                            if (vaultNameField.text.trim() === "") {
+                                securityDialog.nameError = "Vault name cannot be empty"
+                                securityDialog.nameSuccess = false
+                                return
+                            }
+                            if (vaultController.changeVaultName(vaultNameField.text)) {
+                                securityDialog.nameError = ""
+                                securityDialog.nameSuccess = true
+                            } else {
+                                securityDialog.nameError = "Failed to change vault name"
+                                securityDialog.nameSuccess = false
+                            }
+                        }
+                    }
+                }
+
+                Text {
+                    text: securityDialog.nameError
+                    color: "#ef5350"
+                    font.pixelSize: 11
+                    visible: securityDialog.nameError !== ""
+                }
+
+                Text {
+                    text: "Vault name changed successfully"
+                    color: "#4CAF50"
+                    font.pixelSize: 11
+                    visible: securityDialog.nameSuccess
+                }
+            }
+
+            Rectangle {
+                Layout.fillWidth: true
+                height: 1
+                color: "#3a3a3a"
+            }
+
+            // Change Master Password Section
+            Column {
+                Layout.fillWidth: true
+                spacing: 6
+
+                Row {
+                    spacing: 8
+
+                    Text {
+                        text: "\ue899"
+                        font.family: "Material Icons"
+                        font.pixelSize: 16
+                        color: "#1976D2"
+                    }
+
+                    Text {
+                        text: "Change Master Password"
+                        font.pixelSize: 13
+                        font.weight: Font.Medium
+                        color: "#ffffff"
+                    }
+                }
+
+                TextField {
+                    id: currentPasswordField
+                    width: parent.width
+                    placeholderText: "Current password"
+                    echoMode: TextInput.Password
+                }
+
+                Text {
+                    text: securityDialog.currentPasswordError
+                    color: "#ef5350"
+                    font.pixelSize: 11
+                    visible: securityDialog.currentPasswordError !== ""
+                }
+
+                TextField {
+                    id: newPasswordField
+                    width: parent.width
+                    placeholderText: "New password"
+                    echoMode: TextInput.Password
+                }
+
+                Text {
+                    text: securityDialog.newPasswordError
+                    color: "#ef5350"
+                    font.pixelSize: 11
+                    visible: securityDialog.newPasswordError !== ""
+                }
+
+                TextField {
+                    id: confirmNewPasswordField
+                    width: parent.width
+                    placeholderText: "Confirm new password"
+                    echoMode: TextInput.Password
+                }
+
+                Text {
+                    text: securityDialog.confirmPasswordError
+                    color: "#ef5350"
+                    font.pixelSize: 11
+                    visible: securityDialog.confirmPasswordError !== ""
+                }
+
+                Row {
+                    spacing: 6
+
+                    Text {
+                        text: "\ue88e"
+                        font.family: "Material Icons"
+                        font.pixelSize: 14
+                        color: "#606060"
+                    }
+
+                    Text {
+                        text: "Min 8 chars with upper, lower, digit && special"
+                        font.pixelSize: 11
+                        color: "#606060"
+                    }
+                }
+
+                Text {
+                    text: "Password changed successfully"
+                    color: "#4CAF50"
+                    font.pixelSize: 11
+                    visible: securityDialog.passwordSuccess
+                }
+            }
+
+            Item { Layout.fillHeight: true }
+
+            Button {
+                text: "Change Password"
+                Layout.fillWidth: true
+                Layout.preferredHeight: 44
+                highlighted: true
+                font.weight: Font.Medium
+                font.pixelSize: 14
+                onClicked: {
+                    var valid = true
+                    securityDialog.currentPasswordError = ""
+                    securityDialog.newPasswordError = ""
+                    securityDialog.confirmPasswordError = ""
+                    securityDialog.passwordSuccess = false
+
+                    if (currentPasswordField.text === "") {
+                        securityDialog.currentPasswordError = "Current password is required"
+                        valid = false
+                    }
+
+                    if (!vaultController.validateMasterPassword(newPasswordField.text)) {
+                        securityDialog.newPasswordError = "Password doesn't meet requirements"
+                        valid = false
+                    }
+
+                    if (newPasswordField.text !== confirmNewPasswordField.text) {
+                        securityDialog.confirmPasswordError = "Passwords do not match"
+                        valid = false
+                    }
+
+                    if (!valid) return
+
+                    if (vaultController.changeMasterPassword(currentPasswordField.text, newPasswordField.text)) {
+                        securityDialog.passwordSuccess = true
+                        currentPasswordField.text = ""
+                        newPasswordField.text = ""
+                        confirmNewPasswordField.text = ""
+                    } else {
+                        securityDialog.currentPasswordError = "Current password is incorrect"
+                    }
+                }
+            }
+        }
+
+        onClosed: {
+            nameError = ""
+            currentPasswordError = ""
+            newPasswordError = ""
+            confirmPasswordError = ""
+            nameSuccess = false
+            passwordSuccess = false
+            currentPasswordField.text = ""
+            newPasswordField.text = ""
+            confirmNewPasswordField.text = ""
+        }
+
+        onOpened: {
+            vaultNameField.text = vaultController ? vaultController.vaultName : ""
         }
     }
 

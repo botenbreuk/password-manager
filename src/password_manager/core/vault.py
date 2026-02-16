@@ -152,3 +152,23 @@ class VaultManager:
         )
         self._conn.commit()
         self._save()
+
+    def change_vault_name(self, new_name: str):
+        """Change the vault name."""
+        self.vault_name = new_name
+        self._save()
+
+    def change_master_password(self, current_password: str, new_password: str) -> bool:
+        """Change the master password. Returns True if successful."""
+        if current_password != self.master_password:
+            return False
+
+        try:
+            # Re-key the database with the new password
+            self._conn.execute(f"PRAGMA rekey = '{new_password}'")
+            self.master_password = new_password
+            self._save()
+            return True
+        except Exception as e:
+            print(f"Error changing password: {e}")
+            return False
