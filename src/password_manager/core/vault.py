@@ -26,14 +26,16 @@ class VaultManager:
     def exists(path: Path) -> bool:
         return path.exists() and zipfile.is_zipfile(path)
 
-    def create(self, path: Path, name: str, master_password: str):
+    def create(self, path: Path, name: str, master_password: str) -> None:
         self.vault_path = path
         self.vault_name = name
         self.vault_version = VAULT_VERSION
         self.master_password = master_password
 
         # Create temporary encrypted database
-        self._db_path = Path(tempfile.mktemp(suffix=".db"))
+        fd, tmp_path = tempfile.mkstemp(suffix=".db")
+        os.close(fd)
+        self._db_path = Path(tmp_path)
         self._conn = sqlcipher3.connect(str(self._db_path), check_same_thread=False)
         self._conn.execute(f"PRAGMA key = '{master_password}'")
         self._init_database()
@@ -53,7 +55,9 @@ class VaultManager:
                 self.vault_version = vault_info.get("version", "1.0")
 
                 # Extract encrypted database to temp file
-                self._db_path = Path(tempfile.mktemp(suffix=".db"))
+                fd, tmp_path = tempfile.mkstemp(suffix=".db")
+                os.close(fd)
+                self._db_path = Path(tmp_path)
                 self._db_path.write_bytes(zf.read(VAULT_DB_FILE))
 
             # Open with SQLCipher
@@ -126,7 +130,7 @@ class VaultManager:
             cursor.execute("ALTER TABLE passwords ADD COLUMN favorite INTEGER DEFAULT 0")
         self._conn.commit()
 
-    def add_password(self, website: str, username: str, password: str, totp_key: str = ""):
+    def add_password(self, website: str, username: str, password: str, totp_key: str = "") -> int:
         cursor = self._conn.cursor()
         cursor.execute(
             "INSERT INTO passwords (website, username, password, totp_key) VALUES (?, ?, ?, ?)",
@@ -141,7 +145,7 @@ class VaultManager:
         cursor.execute("SELECT id, website, username, password, totp_key, favorite FROM passwords")
         return cursor.fetchall()
 
-    def toggle_favorite(self, password_id: int) -> bool:
+    def toggle_favorite(self, password_id: int):
         """Toggle favorite status and return new status."""
         cursor = self._conn.cursor()
         cursor.execute("SELECT favorite FROM passwords WHERE id = ?", (password_id,))

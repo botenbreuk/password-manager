@@ -133,7 +133,7 @@ Item {
                             width: recentVaultsList.width
                             height: 52
                             radius: 8
-                            color: vaultMouseArea.containsMouse ? "#353535" : "transparent"
+                            color: vaultMouseArea.containsMouse ? "#353535" : "#00353535"
 
                             Behavior on color {
                                 ColorAnimation { duration: 150 }

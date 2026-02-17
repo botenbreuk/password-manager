@@ -480,7 +480,7 @@ Item {
                         height: matchesSearch ? 56 : 0
                         visible: matchesSearch
                         clip: true
-                        color: editMode && editingRow === index ? "#1976D2" + "30" : (mouseArea.containsMouse ? "#2f2f2f" : "transparent")
+                        color: editMode && editingRow === index ? "#1976D2" + "30" : (mouseArea.containsMouse ? "#2f2f2f" : "#002f2f2f")
 
                         property bool matchesSearch: {
                             // Filter by favorites if enabled
@@ -1127,7 +1127,7 @@ Item {
         Layout.fillWidth: true
         height: 40
         radius: 8
-        color: selected ? "#1976D2" + "30" : (itemMouse.containsMouse ? "#2f2f2f" : "transparent")
+        color: selected ? "#1976D2" + "30" : (itemMouse.containsMouse ? "#2f2f2f" : "#002f2f2f")
         opacity: enabled ? 1.0 : 0.5
 
         property string icon: ""
@@ -1218,7 +1218,7 @@ Item {
             Layout.fillWidth: true
             height: 40
             radius: 8
-            color: sectionMouse.containsMouse ? "#2f2f2f" : "transparent"
+            color: sectionMouse.containsMouse ? "#2f2f2f" : "#002f2f2f"
 
             Behavior on color {
                 ColorAnimation { duration: 150 }
