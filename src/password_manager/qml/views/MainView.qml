@@ -1261,14 +1261,6 @@ Item {
                     font.pixelSize: 18
                     color: "#606060"
                     visible: expanded
-
-                    Behavior on text {
-                        SequentialAnimation {
-                            PropertyAnimation { target: parent; property: "opacity"; to: 0; duration: 75 }
-                            PropertyAction {}
-                            PropertyAnimation { target: parent; property: "opacity"; to: 1; duration: 75 }
-                        }
-                    }
                 }
             }
         }
@@ -1278,10 +1270,6 @@ Item {
             Layout.fillWidth: true
             visible: sectionExpanded && expanded
             spacing: 2
-
-            Behavior on visible {
-                NumberAnimation { duration: 150 }
-            }
         }
     }
 
