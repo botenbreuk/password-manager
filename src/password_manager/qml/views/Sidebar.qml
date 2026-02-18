@@ -13,11 +13,13 @@ Rectangle {
 
     property bool expanded: true
     property bool showFavoritesOnly: false
+    property string currentView: "passwords"
     property int totalCount: 0
     property int favoriteCount: 0
 
     signal showAllClicked()
     signal showFavoritesClicked()
+    signal openTotpQrGenerator()
     signal openGenerator()
     signal openExport()
     signal openSecurity()
@@ -45,7 +47,7 @@ Rectangle {
             icon: "\ue899"
             label: "All Passwords"
             expanded: sidebar.expanded
-            selected: !sidebar.showFavoritesOnly
+            selected: sidebar.currentView === "passwords" && !sidebar.showFavoritesOnly
             badgeCount: sidebar.totalCount
             onClicked: sidebar.showAllClicked()
         }
@@ -54,7 +56,7 @@ Rectangle {
             icon: "\ue838"
             label: "Favorites"
             expanded: sidebar.expanded
-            selected: sidebar.showFavoritesOnly
+            selected: sidebar.currentView === "passwords" && sidebar.showFavoritesOnly
             badgeCount: sidebar.favoriteCount
             onClicked: sidebar.showFavoritesClicked()
         }
@@ -102,6 +104,21 @@ Rectangle {
             Layout.rightMargin: 8
             height: 1
             color: "#3a3a3a"
+        }
+
+        SidebarSection {
+            icon: "\ue425"
+            label: "TOTP Utils"
+            expanded: sidebar.expanded
+
+            SidebarItem {
+                icon: "\ue1a3"
+                label: "QR Code Generator"
+                expanded: sidebar.expanded
+                indent: true
+                selected: sidebar.currentView === "totpQrGenerator"
+                onClicked: sidebar.openTotpQrGenerator()
+            }
         }
 
         SidebarSection {

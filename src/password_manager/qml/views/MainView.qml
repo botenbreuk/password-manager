@@ -16,6 +16,9 @@ Item {
     property string searchQuery: ""
     property bool showFavoritesOnly: false
 
+    // View switching
+    property string currentView: "passwords"
+
     // Click outside to unfocus search
     MouseArea {
         anchors.fill: parent
@@ -68,10 +71,12 @@ Item {
             id: sidebar
             expanded: mainView.sidebarExpanded
             showFavoritesOnly: mainView.showFavoritesOnly
+            currentView: mainView.currentView
             totalCount: passwordListPanel.count
             favoriteCount: passwordController ? passwordController.passwordModel.favoriteCount : 0
-            onShowAllClicked: mainView.showFavoritesOnly = false
-            onShowFavoritesClicked: mainView.showFavoritesOnly = true
+            onShowAllClicked: { mainView.currentView = "passwords"; mainView.showFavoritesOnly = false }
+            onShowFavoritesClicked: { mainView.currentView = "passwords"; mainView.showFavoritesOnly = true }
+            onOpenTotpQrGenerator: mainView.currentView = "totpQrGenerator"
             onOpenGenerator: generatorDialog.open()
             onOpenExport: exportDialog.open()
             onOpenSecurity: securityDialog.open()
@@ -81,6 +86,7 @@ Item {
 
         PasswordListPanel {
             id: passwordListPanel
+            visible: mainView.currentView === "passwords"
             model: passwordController ? passwordController.passwordModel : null
             searchQuery: mainView.searchQuery
             showFavoritesOnly: mainView.showFavoritesOnly
@@ -100,11 +106,21 @@ Item {
 
         PasswordEntryForm {
             id: entryForm
+            visible: mainView.currentView === "passwords"
             editMode: mainView.editMode
             onAddRequested: function(website, username, password, totpKey) { addEntry(website, username, password, totpKey) }
             onUpdateRequested: function(website, username, password, totpKey) { updateEntry(website, username, password, totpKey) }
             onCancelRequested: cancelEdit()
             onOpenGenerator: generatorDialog.open()
+        }
+
+        Loader {
+            id: totpQrGeneratorLoader
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            active: mainView.currentView === "totpQrGenerator"
+            visible: active
+            source: "totp/TotpQrGeneratorView.qml"
         }
     }
 
