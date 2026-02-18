@@ -1,3 +1,4 @@
+import os
 import sys
 from pathlib import Path
 
@@ -20,6 +21,7 @@ def get_resource_path(relative_path: str) -> Path:
 
 
 def main():
+    os.environ.setdefault("QT_QUICK_CONTROLS_STYLE", "Material")
     app = QGuiApplication(sys.argv)
     app.setApplicationName("Password Manager")
 

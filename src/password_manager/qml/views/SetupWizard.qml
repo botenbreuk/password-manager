@@ -2,22 +2,14 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import QtQuick.Dialogs
-import QtQuick.Controls.Material
-import QtQuick.Effects
+import "../components"
 
-Dialog {
+AppDialog {
     id: setupDialog
-    title: ""
-    modal: true
     width: 500
     height: 620
-    anchors.centerIn: parent
-    padding: 0
-    topPadding: 0
-    dim: true
-
-    Material.theme: Material.Dark
-    Material.accent: "#1976D2"
+    headerIcon: "\ue899"
+    headerTitle: "Create New Vault"
 
     signal vaultCreated()
 
@@ -25,81 +17,6 @@ Dialog {
     property string passwordError: ""
     property string confirmError: ""
     property string locationError: ""
-
-    Overlay.modal: Rectangle {
-        color: "#D0000000"
-    }
-
-    background: Rectangle {
-        color: "#E8141414"
-        radius: 16
-        border.color: "#404040"
-        border.width: 1
-
-        layer.enabled: true
-        layer.effect: MultiEffect {
-            shadowEnabled: true
-            shadowColor: "#80000000"
-            shadowBlur: 1.5
-            shadowVerticalOffset: 8
-        }
-    }
-
-    // Custom header
-    header: Rectangle {
-        height: 70
-        color: "#252525"
-        radius: 16
-
-        // Bottom corners should not be rounded
-        Rectangle {
-            anchors.bottom: parent.bottom
-            anchors.left: parent.left
-            anchors.right: parent.right
-            height: 20
-            color: "#252525"
-        }
-
-        RowLayout {
-            anchors.fill: parent
-            anchors.leftMargin: 24
-            anchors.rightMargin: 24
-
-            Text {
-                text: "\ue899"
-                font.family: "Material Icons"
-                font.pixelSize: 28
-                color: "#1976D2"
-            }
-
-            Text {
-                text: "Create New Vault"
-                font.pixelSize: 20
-                font.weight: Font.DemiBold
-                color: "#ffffff"
-            }
-
-            Item { Layout.fillWidth: true }
-
-            RoundButton {
-                width: 36
-                height: 36
-                flat: true
-                onClicked: setupDialog.close()
-
-                Text {
-                    anchors.centerIn: parent
-                    text: "\ue5cd"
-                    font.family: "Material Icons"
-                    font.pixelSize: 20
-                    color: "#808080"
-                }
-            }
-        }
-    }
-
-    // Remove default footer
-    footer: Item { height: 0 }
 
     ColumnLayout {
         anchors.fill: parent
@@ -111,22 +28,9 @@ Dialog {
             Layout.fillWidth: true
             spacing: 6
 
-            Row {
-                spacing: 8
-
-                Text {
-                    text: "\ue8d3"
-                    font.family: "Material Icons"
-                    font.pixelSize: 16
-                    color: "#1976D2"
-                }
-
-                Text {
-                    text: "Vault Name"
-                    font.pixelSize: 13
-                    font.weight: Font.Medium
-                    color: "#ffffff"
-                }
+            SectionHeader {
+                icon: "\ue8d3"
+                label: "Vault Name"
             }
 
             TextField {
@@ -135,11 +39,8 @@ Dialog {
                 placeholderText: "e.g., Personal, Work, Family"
             }
 
-            Text {
-                text: nameError
-                color: "#ef5350"
-                font.pixelSize: 11
-                visible: nameError !== ""
+            ErrorText {
+                errorMessage: setupDialog.nameError
             }
         }
 
@@ -148,22 +49,9 @@ Dialog {
             Layout.fillWidth: true
             spacing: 6
 
-            Row {
-                spacing: 8
-
-                Text {
-                    text: "\ue897"
-                    font.family: "Material Icons"
-                    font.pixelSize: 16
-                    color: "#1976D2"
-                }
-
-                Text {
-                    text: "Master Password"
-                    font.pixelSize: 13
-                    font.weight: Font.Medium
-                    color: "#ffffff"
-                }
+            SectionHeader {
+                icon: "\ue897"
+                label: "Master Password"
             }
 
             TextField {
@@ -173,11 +61,8 @@ Dialog {
                 echoMode: TextInput.Password
             }
 
-            Text {
-                text: passwordError
-                color: "#ef5350"
-                font.pixelSize: 11
-                visible: passwordError !== ""
+            ErrorText {
+                errorMessage: setupDialog.passwordError
             }
 
             TextField {
@@ -187,11 +72,8 @@ Dialog {
                 echoMode: TextInput.Password
             }
 
-            Text {
-                text: confirmError
-                color: "#ef5350"
-                font.pixelSize: 11
-                visible: confirmError !== ""
+            ErrorText {
+                errorMessage: setupDialog.confirmError
             }
 
             // Password requirements hint
@@ -218,48 +100,22 @@ Dialog {
             Layout.fillWidth: true
             spacing: 6
 
-            Row {
-                spacing: 8
-
-                Text {
-                    text: "\ue2c8"
-                    font.family: "Material Icons"
-                    font.pixelSize: 16
-                    color: "#1976D2"
-                }
-
-                Text {
-                    text: "Save Location"
-                    font.pixelSize: 13
-                    font.weight: Font.Medium
-                    color: "#ffffff"
-                }
+            SectionHeader {
+                icon: "\ue2c8"
+                label: "Save Location"
             }
 
-            Row {
-                width: parent.width
-                spacing: 10
-
-                TextField {
-                    id: locationField
-                    width: parent.width - browseButton.width - 10
-                    placeholderText: "Choose where to save..."
-                    readOnly: true
-                }
-
-                Button {
-                    id: browseButton
-                    text: "Browse"
-                    flat: true
-                    onClicked: fileDialog.open()
-                }
+            BrowseFileRow {
+                id: locationRow
+                placeholderText: "Choose where to save..."
+                dialogTitle: "Save Vault File"
+                nameFilters: ["Vault Files (*.vault)"]
+                fileMode: FileDialog.SaveFile
+                currentFile: "file:///" + (nameField.text ? nameField.text.toLowerCase().replace(/ /g, "-") : "vault") + ".vault"
             }
 
-            Text {
-                text: locationError
-                color: "#ef5350"
-                font.pixelSize: 11
-                visible: locationError !== ""
+            ErrorText {
+                errorMessage: setupDialog.locationError
             }
         }
 
@@ -291,27 +147,6 @@ Dialog {
         }
     }
 
-    FileDialog {
-        id: fileDialog
-        title: "Save Vault File"
-        fileMode: FileDialog.SaveFile
-        nameFilters: ["Vault Files (*.vault)"]
-        currentFile: "file:///" + (nameField.text ? nameField.text.toLowerCase().replace(/ /g, "-") : "vault") + ".vault"
-        onAccepted: {
-            var path = selectedFile.toString()
-            // Handle file:// URL - on Windows it's file:///C:/ so check for drive letter
-            if (path.startsWith("file:///")) {
-                path = path.substring(8)
-                // On Unix, paths start with /, so we need file:///path -> /path
-                // On Windows, paths start with drive letter, so file:///C:/path -> C:/path
-                if (path.length > 1 && path.charAt(1) !== ':') {
-                    path = "/" + path
-                }
-            }
-            locationField.text = path
-        }
-    }
-
     function createVault() {
         var valid = true
 
@@ -336,7 +171,7 @@ Dialog {
             confirmError = ""
         }
 
-        if (locationField.text.trim() === "") {
+        if (locationRow.text.trim() === "") {
             locationError = "Please choose a location"
             valid = false
         } else {
@@ -345,14 +180,14 @@ Dialog {
 
         if (!valid) return
 
-        vaultController.createVault(locationField.text, nameField.text.trim(), passwordField.text)
+        vaultController.createVault(locationRow.text, nameField.text.trim(), passwordField.text)
     }
 
     onOpened: {
         nameField.text = ""
         passwordField.text = ""
         confirmField.text = ""
-        locationField.text = ""
+        locationRow.text = ""
         nameError = ""
         passwordError = ""
         confirmError = ""

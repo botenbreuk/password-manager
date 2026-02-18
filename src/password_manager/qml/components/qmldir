@@ -1,0 +1,11 @@
+module components
+IconButton 1.0 IconButton.qml
+ErrorText 1.0 ErrorText.qml
+SectionHeader 1.0 SectionHeader.qml
+ShadowCard 1.0 ShadowCard.qml
+CopyableCell 1.0 CopyableCell.qml
+FormField 1.0 FormField.qml
+BrowseFileRow 1.0 BrowseFileRow.qml
+AppDialog 1.0 AppDialog.qml
+SidebarItem 1.0 SidebarItem.qml
+SidebarSection 1.0 SidebarSection.qml

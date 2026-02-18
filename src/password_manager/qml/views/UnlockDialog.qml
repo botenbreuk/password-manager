@@ -2,8 +2,8 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import QtQuick.Dialogs
-import QtQuick.Controls.Material
 import QtQuick.Effects
+import "../components"
 
 Item {
     id: unlockView
@@ -24,19 +24,9 @@ Item {
             spacing: 40
 
             // Recent vaults panel (left)
-            Rectangle {
+            ShadowCard {
                 width: 280
                 height: mainColumn.height
-                color: "#252525"
-                radius: 16
-
-                layer.enabled: true
-                layer.effect: MultiEffect {
-                    shadowEnabled: true
-                    shadowColor: "#40000000"
-                    shadowBlur: 1.0
-                    shadowVerticalOffset: 4
-                }
 
                 Column {
                     anchors.fill: parent
@@ -289,19 +279,9 @@ Item {
                 }
 
                 // Main card with all form fields
-                Rectangle {
+                ShadowCard {
                     width: parent.width
                     height: formColumn.height + 48
-                    color: "#252525"
-                    radius: 16
-
-                    layer.enabled: true
-                    layer.effect: MultiEffect {
-                        shadowEnabled: true
-                        shadowColor: "#40000000"
-                        shadowBlur: 1.0
-                        shadowVerticalOffset: 4
-                    }
 
                     Column {
                         id: formColumn
@@ -343,11 +323,9 @@ Item {
                                 }
                             }
 
-                            Text {
-                                text: fileError
-                                color: "#ef5350"
-                                font.pixelSize: 12
-                                visible: fileError !== ""
+                            ErrorText {
+                                errorMessage: unlockView.fileError
+                                fontSize: 12
                             }
                         }
 
@@ -371,11 +349,9 @@ Item {
                                 onAccepted: unlock()
                             }
 
-                            Text {
-                                text: passwordError
-                                color: "#ef5350"
-                                font.pixelSize: 12
-                                visible: passwordError !== ""
+                            ErrorText {
+                                errorMessage: unlockView.passwordError
+                                fontSize: 12
                             }
                         }
                     }
@@ -422,11 +398,8 @@ Item {
         nameFilters: ["Vault Files (*.vault)"]
         onAccepted: {
             var path = selectedFile.toString()
-            // Handle file:// URL - on Windows it's file:///C:/ so check for drive letter
             if (path.startsWith("file:///")) {
                 path = path.substring(8)
-                // On Unix, paths start with /, so we need file:///path -> /path
-                // On Windows, paths start with drive letter, so file:///C:/path -> C:/path
                 if (path.length > 1 && path.charAt(1) !== ':') {
                     path = "/" + path
                 }
