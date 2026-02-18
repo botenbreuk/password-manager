@@ -14,6 +14,7 @@ Item {
     property string fileError: ""
     property string passwordError: ""
     property string selectedVaultPath: ""
+    property int missingVaultIndex: -1
 
     Rectangle {
         anchors.fill: parent
@@ -134,9 +135,14 @@ Item {
                                 anchors.fill: parent
                                 hoverEnabled: true
                                 onClicked: {
-                                    selectedVaultPath = model.path
-                                    fileField.text = model.path
-                                    passwordField.forceActiveFocus()
+                                    if (vaultController.vaultExists(model.path)) {
+                                        selectedVaultPath = model.path
+                                        fileField.text = model.path
+                                        passwordField.forceActiveFocus()
+                                    } else {
+                                        missingVaultIndex = index
+                                        missingVaultDialog.open()
+                                    }
                                 }
                             }
 
@@ -388,6 +394,14 @@ Item {
                     }
                 }
             }
+        }
+    }
+
+    MissingVaultDialog {
+        id: missingVaultDialog
+        onRemoveRequested: {
+            vaultController.removeRecentVault(missingVaultIndex)
+            missingVaultIndex = -1
         }
     }
 

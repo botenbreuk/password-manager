@@ -20,7 +20,7 @@ class SettingsManager:
             self._settings.setArrayIndex(i)
             path = self._settings.value("path", "")
             name = self._settings.value("name", "")
-            if path and Path(path).exists():
+            if path:
                 vaults.append({"path": path, "name": name})
         self._settings.endArray()
         return vaults
