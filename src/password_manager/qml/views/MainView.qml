@@ -80,7 +80,7 @@ Item {
             onOpenGenerator: generatorDialog.open()
             onOpenExport: exportDialog.open()
             onOpenSecurity: mainView.currentView = "security"
-            onOpenShortcuts: shortcutsDialog.open()
+            onOpenShortcuts: mainView.currentView = "shortcuts"
             onOpenAbout: aboutDialog.open()
         }
 
@@ -131,16 +131,21 @@ Item {
             visible: active
             source: "security/SecuritySettingsView.qml"
         }
+
+        Loader {
+            id: shortcutsLoader
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            active: mainView.currentView === "shortcuts"
+            visible: active
+            source: "settings/KeyboardShortcutsView.qml"
+        }
     }
 
     // Dialogs
     PasswordGeneratorDialog {
         id: generatorDialog
         onPasswordGenerated: function(pw) { entryForm.setPassword(pw) }
-    }
-
-    KeyboardShortcutsDialog {
-        id: shortcutsDialog
     }
 
     AboutDialog {
@@ -218,7 +223,6 @@ Item {
         sequence: "Escape"
         onActivated: {
             if (generatorDialog.visible) generatorDialog.close()
-            else if (shortcutsDialog.visible) shortcutsDialog.close()
             else if (aboutDialog.visible) aboutDialog.close()
             else if (exportDialog.visible) exportDialog.close()
             else if (editMode) cancelEdit()

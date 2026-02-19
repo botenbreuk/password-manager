@@ -140,6 +140,7 @@ Rectangle {
                 label: "Keyboard Shortcuts"
                 expanded: sidebar.expanded
                 indent: true
+                selected: sidebar.currentView === "shortcuts"
                 onClicked: sidebar.openShortcuts()
             }
         }
