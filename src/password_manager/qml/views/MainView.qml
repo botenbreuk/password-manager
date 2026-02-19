@@ -79,7 +79,7 @@ Item {
             onOpenTotpQrGenerator: mainView.currentView = "totpQrGenerator"
             onOpenGenerator: generatorDialog.open()
             onOpenExport: exportDialog.open()
-            onOpenSecurity: securityDialog.open()
+            onOpenSecurity: mainView.currentView = "security"
             onOpenShortcuts: shortcutsDialog.open()
             onOpenAbout: aboutDialog.open()
         }
@@ -122,6 +122,15 @@ Item {
             visible: active
             source: "totp/TotpQrGeneratorView.qml"
         }
+
+        Loader {
+            id: securitySettingsLoader
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            active: mainView.currentView === "security"
+            visible: active
+            source: "security/SecuritySettingsView.qml"
+        }
     }
 
     // Dialogs
@@ -140,10 +149,6 @@ Item {
 
     ExportDialog {
         id: exportDialog
-    }
-
-    SecuritySettingsDialog {
-        id: securityDialog
     }
 
     // Orchestration functions
@@ -216,7 +221,6 @@ Item {
             else if (shortcutsDialog.visible) shortcutsDialog.close()
             else if (aboutDialog.visible) aboutDialog.close()
             else if (exportDialog.visible) exportDialog.close()
-            else if (securityDialog.visible) securityDialog.close()
             else if (editMode) cancelEdit()
             else headerBar.clearSearch()
         }

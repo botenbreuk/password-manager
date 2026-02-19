@@ -131,6 +131,7 @@ Rectangle {
                 label: "Security"
                 expanded: sidebar.expanded
                 indent: true
+                selected: sidebar.currentView === "security"
                 onClicked: sidebar.openSecurity()
             }
 
