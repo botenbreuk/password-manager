@@ -18,6 +18,7 @@ ColumnLayout {
         Layout.fillWidth: true
         height: 40
         radius: 8
+        visible: sidebarSection.expanded
         color: sectionMouse.containsMouse ? "#2f2f2f" : "#002f2f2f"
 
         Behavior on color {
@@ -68,7 +69,7 @@ ColumnLayout {
     ColumnLayout {
         id: sectionContent
         Layout.fillWidth: true
-        visible: sidebarSection.sectionExpanded && sidebarSection.expanded
+        visible: sidebarSection.sectionExpanded || !sidebarSection.expanded
         spacing: 2
     }
 }

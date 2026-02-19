@@ -34,7 +34,7 @@ Rectangle {
 
     RowLayout {
         anchors.fill: parent
-        anchors.leftMargin: indent ? 24 : 8
+        anchors.leftMargin: (indent && expanded) ? 24 : 8
         anchors.rightMargin: 8
         spacing: 10
 
