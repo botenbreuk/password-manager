@@ -211,3 +211,6 @@ __marimo__/
 *.iml
 
 *.vault
+
+# Release build artifacts
+!release/password_manager.spec

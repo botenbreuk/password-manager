@@ -34,6 +34,14 @@ def main():
     vault_controller = VaultController(password_controller, app)
 
     engine = QQmlApplicationEngine()
+
+    # When running as PyInstaller bundle, add the bundle path as QML import path
+    # so the engine can find PyQt6's built-in QML modules (QtQuick, Controls, etc.)
+    if getattr(sys, 'frozen', False):
+        bundle_dir = str(Path(sys._MEIPASS))
+        engine.addImportPath(bundle_dir)
+        engine.addImportPath(os.path.join(bundle_dir, "PyQt6", "Qt6", "qml"))
+
     engine.rootContext().setContextProperty("vaultController", vault_controller)
     engine.rootContext().setContextProperty("passwordController", password_controller)
 
@@ -50,3 +58,7 @@ def main():
     del engine
 
     sys.exit(exit_code)
+
+
+if __name__ == "__main__":
+    main()
