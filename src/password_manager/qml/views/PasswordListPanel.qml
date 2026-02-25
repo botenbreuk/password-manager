@@ -19,9 +19,11 @@ Rectangle {
     property int editingRow: -1
     property int totpRefreshTrigger: 0
     property int totpRemainingSeconds: 30
+    property bool showAddButton: true
 
     readonly property int count: passwordList.count
 
+    signal addRequested()
     signal editRequested(int row)
     signal deleteRequested(int row)
     signal toggleFavoriteRequested(int row)
@@ -80,6 +82,35 @@ Rectangle {
                 }
 
                 Item { Layout.fillWidth: true }
+
+                Button {
+                    implicitHeight: 32
+                    highlighted: true
+                    font.weight: Font.Medium
+                    visible: listPanel.showAddButton
+                    onClicked: listPanel.addRequested()
+
+                    contentItem: Row {
+                        spacing: 6
+                        anchors.centerIn: parent
+
+                        Text {
+                            text: "\ue145"
+                            font.family: "Material Icons"
+                            font.pixelSize: 16
+                            color: "#ffffff"
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+
+                        Text {
+                            text: "Add Password"
+                            font.pixelSize: 13
+                            font.weight: Font.Medium
+                            color: "#ffffff"
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                    }
+                }
             }
 
             Rectangle {
@@ -407,7 +438,7 @@ Rectangle {
                     }
 
                     Text {
-                        text: "Add your first password using the form"
+                        text: "Click \"Add Password\" to get started"
                         font.pixelSize: 13
                         color: "#505050"
                         anchors.horizontalCenter: parent.horizontalCenter

@@ -22,6 +22,7 @@ Rectangle {
     signal openTotpQrGenerator()
     signal openGenerator()
     signal openExport()
+    signal openGeneral()
     signal openSecurity()
     signal openShortcuts()
     signal openAbout()
@@ -125,6 +126,15 @@ Rectangle {
             icon: "\ue8b8"
             label: "Settings"
             expanded: sidebar.expanded
+
+            SidebarItem {
+                icon: "\ue8b8"
+                label: "General"
+                expanded: sidebar.expanded
+                indent: true
+                selected: sidebar.currentView === "general"
+                onClicked: sidebar.openGeneral()
+            }
 
             SidebarItem {
                 icon: "\ue897"

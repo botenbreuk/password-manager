@@ -51,6 +51,7 @@ class VaultController(QObject):
     vaultNameChanged = pyqtSignal()
     recentVaultsChanged = pyqtSignal()
     loadingChanged = pyqtSignal()
+    entryFormStyleChanged = pyqtSignal()
 
     def __init__(self, password_controller=None, parent=None):
         super().__init__(parent)
@@ -60,6 +61,7 @@ class VaultController(QObject):
         self._settings = SettingsManager()
         self._vault_name = ""
         self._loading = False
+        self._entry_form_style = self._settings.get_entry_form_style()
         self._worker = None
         self._pending_vault_path = None
         self._pending_vault_name = None
@@ -200,3 +202,14 @@ class VaultController(QObject):
     def changeMasterPassword(self, current_password: str, new_password: str) -> bool:
         """Change the master password."""
         return self._vault.change_master_password(current_password, new_password)
+
+    @pyqtProperty(str, notify=entryFormStyleChanged)
+    def entryFormStyle(self):
+        return self._entry_form_style
+
+    @pyqtSlot(str)
+    def setEntryFormStyle(self, style: str):
+        if self._entry_form_style != style:
+            self._entry_form_style = style
+            self._settings.set_entry_form_style(style)
+            self.entryFormStyleChanged.emit()

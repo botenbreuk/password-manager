@@ -59,6 +59,18 @@ class PasswordController(QObject):
     def totpError(self):
         return self._totp_error
 
+    @pyqtSlot()
+    def clearErrors(self):
+        """Clear all validation error messages."""
+        self._url_error = ""
+        self._username_error = ""
+        self._password_error = ""
+        self._totp_error = ""
+        self.urlErrorChanged.emit()
+        self.usernameErrorChanged.emit()
+        self.passwordErrorChanged.emit()
+        self.totpErrorChanged.emit()
+
     def _validate_entry(self, website: str, username: str, password: str, totp_key: str) -> bool:
         """Validate entry fields and set error messages."""
         valid = True

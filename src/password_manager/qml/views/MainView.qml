@@ -19,6 +19,9 @@ Item {
     // View switching
     property string currentView: "passwords"
 
+    // Form style: "dialog" or "panel"
+    property bool useDialogMode: vaultController ? vaultController.entryFormStyle === "dialog" : false
+
     // Click outside to unfocus search
     MouseArea {
         anchors.fill: parent
@@ -79,6 +82,7 @@ Item {
             onOpenTotpQrGenerator: mainView.currentView = "totpQrGenerator"
             onOpenGenerator: generatorDialog.open()
             onOpenExport: exportDialog.open()
+            onOpenGeneral: mainView.currentView = "general"
             onOpenSecurity: mainView.currentView = "security"
             onOpenShortcuts: mainView.currentView = "shortcuts"
             onOpenAbout: aboutDialog.open()
@@ -94,6 +98,8 @@ Item {
             editingRow: mainView.editingRow
             totpRefreshTrigger: mainView.totpRefreshTrigger
             totpRemainingSeconds: mainView.totpRemainingSeconds
+            showAddButton: mainView.useDialogMode
+            onAddRequested: activeForm().openForAdd()
             onEditRequested: function(row) { startEdit(row) }
             onDeleteRequested: function(row) { passwordController.deleteEntry(row) }
             onToggleFavoriteRequested: function(row) { passwordController.toggleFavorite(row) }
@@ -104,13 +110,11 @@ Item {
             onToggleVisibilityRequested: function(row) { passwordController.togglePasswordVisibility(row) }
         }
 
-        PasswordEntryForm {
-            id: entryForm
-            visible: mainView.currentView === "passwords"
-            editMode: mainView.editMode
+        PasswordEntryFormPanel {
+            id: entryFormPanel
+            visible: mainView.currentView === "passwords" && !mainView.useDialogMode
             onAddRequested: function(website, username, password, totpKey) { addEntry(website, username, password, totpKey) }
             onUpdateRequested: function(website, username, password, totpKey) { updateEntry(website, username, password, totpKey) }
-            onCancelRequested: cancelEdit()
             onOpenGenerator: generatorDialog.open()
         }
 
@@ -140,12 +144,28 @@ Item {
             visible: active
             source: "settings/KeyboardShortcutsView.qml"
         }
+
+        Loader {
+            id: generalSettingsLoader
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            active: mainView.currentView === "general"
+            visible: active
+            source: "settings/GeneralSettingsView.qml"
+        }
     }
 
     // Dialogs
+    PasswordEntryForm {
+        id: entryForm
+        onAddRequested: function(website, username, password, totpKey) { addEntry(website, username, password, totpKey) }
+        onUpdateRequested: function(website, username, password, totpKey) { updateEntry(website, username, password, totpKey) }
+        onOpenGenerator: generatorDialog.open()
+    }
+
     PasswordGeneratorDialog {
         id: generatorDialog
-        onPasswordGenerated: function(pw) { entryForm.setPassword(pw) }
+        onPasswordGenerated: function(pw) { activeForm().setPassword(pw) }
     }
 
     AboutDialog {
@@ -156,11 +176,16 @@ Item {
         id: exportDialog
     }
 
+    // Returns the currently active entry form (dialog or panel)
+    function activeForm() {
+        return useDialogMode ? entryForm : entryFormPanel
+    }
+
     // Orchestration functions
     function startEdit(row) {
         editMode = true
         editingRow = row
-        entryForm.loadEntry(
+        activeForm().loadEntry(
             passwordController.getWebsite(row),
             passwordController.getUsername(row),
             passwordController.getPassword(row),
@@ -171,19 +196,20 @@ Item {
     function cancelEdit() {
         editMode = false
         editingRow = -1
-        entryForm.clearFields()
+        activeForm().close()
     }
 
     function addEntry(website, username, password, totpKey) {
         if (passwordController && passwordController.addEntry(website, username, password, totpKey)) {
-            entryForm.clearFields()
-            entryForm.focusWebsite()
+            activeForm().close()
         }
     }
 
     function updateEntry(website, username, password, totpKey) {
         if (passwordController && passwordController.updateEntry(editingRow, website, username, password, totpKey)) {
-            cancelEdit()
+            editMode = false
+            editingRow = -1
+            activeForm().close()
         }
     }
 
@@ -195,10 +221,7 @@ Item {
 
     Shortcut {
         sequence: "Ctrl+N"
-        onActivated: {
-            cancelEdit()
-            entryForm.focusWebsite()
-        }
+        onActivated: activeForm().openForAdd()
     }
 
     Shortcut {
@@ -222,10 +245,10 @@ Item {
     Shortcut {
         sequence: "Escape"
         onActivated: {
-            if (generatorDialog.visible) generatorDialog.close()
+            if (useDialogMode && entryForm.visible) entryForm.close()
+            else if (generatorDialog.visible) generatorDialog.close()
             else if (aboutDialog.visible) aboutDialog.close()
             else if (exportDialog.visible) exportDialog.close()
-            else if (editMode) cancelEdit()
             else headerBar.clearSearch()
         }
     }

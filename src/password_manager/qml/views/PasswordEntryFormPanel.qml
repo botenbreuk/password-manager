@@ -1,15 +1,15 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import QtQuick.Effects
 import "../components"
 
-AppDialog {
-    id: entryForm
-    width: 400
-    height: 510
-    headerIcon: editMode ? "\ue3c9" : "\ue145"
-    headerIconColor: "#1976D2"
-    headerTitle: editMode ? "Edit Entry" : "Add New Entry"
+Rectangle {
+    id: entryFormPanel
+    Layout.fillHeight: true
+    Layout.preferredWidth: 280
+    color: "#252525"
+    radius: 12
 
     property bool editMode: false
 
@@ -27,14 +27,12 @@ AppDialog {
         usernameField.text = username
         passwordField.text = password
         totpField.text = totpKey
-        entryForm.open()
         websiteField.field.forceActiveFocus()
     }
 
     function openForAdd() {
         editMode = false
         clearFields()
-        entryForm.open()
         websiteField.field.forceActiveFocus()
     }
 
@@ -48,12 +46,49 @@ AppDialog {
         }
     }
 
-    onClosed: clearFields()
+    function close() {
+        clearFields()
+    }
+
+    layer.enabled: true
+    layer.effect: MultiEffect {
+        shadowEnabled: true
+        shadowColor: "#40000000"
+        shadowBlur: 0.5
+        shadowVerticalOffset: 2
+    }
 
     ColumnLayout {
         anchors.fill: parent
-        anchors.margins: 20
+        anchors.margins: 16
         spacing: 12
+
+        // Header
+        Row {
+            spacing: 8
+
+            Text {
+                text: entryFormPanel.editMode ? "\ue3c9" : "\ue145"
+                font.family: "Material Icons"
+                font.pixelSize: 20
+                color: "#1976D2"
+                anchors.verticalCenter: parent.verticalCenter
+            }
+
+            Text {
+                text: entryFormPanel.editMode ? "Edit Entry" : "Add New Entry"
+                font.pixelSize: 15
+                font.weight: Font.DemiBold
+                color: "#e0e0e0"
+                anchors.verticalCenter: parent.verticalCenter
+            }
+        }
+
+        Rectangle {
+            Layout.fillWidth: true
+            height: 1
+            color: "#3a3a3a"
+        }
 
         FormField {
             id: websiteField
@@ -94,7 +129,7 @@ AppDialog {
                 tooltip: "Generate password"
                 Layout.alignment: Qt.AlignBottom
                 Layout.bottomMargin: passwordController && passwordController.passwordError !== "" ? 20 : 0
-                onClicked: entryForm.openGenerator()
+                onClicked: entryFormPanel.openGenerator()
             }
         }
 
@@ -132,6 +167,8 @@ AppDialog {
             }
         }
 
+        Item { Layout.fillHeight: true }
+
         // Action buttons
         RowLayout {
             Layout.fillWidth: true
@@ -139,17 +176,17 @@ AppDialog {
 
             Button {
                 Layout.fillWidth: true
-                Layout.preferredHeight: 44
+                Layout.preferredHeight: 40
                 flat: true
                 text: "Cancel"
-                onClicked: entryForm.close()
+                onClicked: entryFormPanel.clearFields()
             }
 
             Button {
                 Layout.fillWidth: true
-                Layout.preferredHeight: 44
+                Layout.preferredHeight: 40
                 highlighted: true
-                text: entryForm.editMode ? "Save" : "Add"
+                text: entryFormPanel.editMode ? "Save" : "Add"
                 icon.source: ""
                 font.weight: Font.Medium
                 onClicked: submitForm()
@@ -159,9 +196,9 @@ AppDialog {
 
     function submitForm() {
         if (editMode) {
-            entryForm.updateRequested(websiteField.text, usernameField.text, passwordField.text, totpField.text)
+            entryFormPanel.updateRequested(websiteField.text, usernameField.text, passwordField.text, totpField.text)
         } else {
-            entryForm.addRequested(websiteField.text, usernameField.text, passwordField.text, totpField.text)
+            entryFormPanel.addRequested(websiteField.text, usernameField.text, passwordField.text, totpField.text)
         }
     }
 }

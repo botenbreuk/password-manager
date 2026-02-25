@@ -62,3 +62,11 @@ class SettingsManager:
         """Clears all recent vaults."""
         self._settings.beginWriteArray("recentVaults")
         self._settings.endArray()
+
+    def get_entry_form_style(self) -> str:
+        """Returns 'dialog' or 'panel'."""
+        return self._settings.value("entryFormStyle", "panel")
+
+    def set_entry_form_style(self, style: str):
+        """Stores the entry form style ('dialog' or 'panel')."""
+        self._settings.setValue("entryFormStyle", style)
